@@ -25,7 +25,10 @@ public class Controller {
     @PostMapping(value = "/reports", produces = "application/json", consumes = "application/json")
     public ResponseEntity<EmergencyReport> convertAddressFormat(@RequestBody EmergencyReport emergencyReport) {
         log.info("Controller - convertAddressFormat started for payload = {}", emergencyReport);
+
         validator.validateRequestPayload(emergencyReport);
+
+
 
         log.info("Controller - convertAddressFormat ended successfully!");
         return null;

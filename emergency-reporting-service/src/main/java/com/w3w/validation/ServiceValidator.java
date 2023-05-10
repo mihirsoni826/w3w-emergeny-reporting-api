@@ -1,16 +1,27 @@
 package com.w3w.validation;
 
+import com.w3w.exception.AutoSuggestException;
 import com.w3w.exception.BadRequestException;
 import com.w3w.model.EmergencyReport;
+import com.w3w.model.ThreeWordAddressSuggestions;
+import com.w3w.service.IEmergencyReportService;
+import com.what3words.javawrapper.response.Suggestion;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Slf4j
 @Component
 public class ServiceValidator {
+
+    private IEmergencyReportService service;
+
+    public ServiceValidator(IEmergencyReportService service) {
+        this.service = service;
+    }
 
     public void validateRequestPayload(EmergencyReport report) {
         validateCombinationOfLatLong3wa(report);
@@ -26,7 +37,7 @@ public class ServiceValidator {
             throw new BadRequestException("Please provide either both the coordinates or the 3 work address");
         }
         if(w3w != null && !w3w.isEmpty()) {
-            validateThreeWordAddress(w3w);
+            validateThreeWordAddress(report);
         }
         if(lat != null && lon != null) {
             isUKLatAndLong(lat, lon);
@@ -34,9 +45,10 @@ public class ServiceValidator {
 
     }
 
-    private void validateThreeWordAddress(String w3w) {
+    private void validateThreeWordAddress(EmergencyReport report) {
         String regex = "^/*(?:(?:\\p{L}\\p{M}*)+[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+|(?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3}[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3}[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3})$";
 
+        String w3w = report.getThreeWordAddress();
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(w3w);
 
@@ -44,8 +56,15 @@ public class ServiceValidator {
             log.info("validateThreeWordAddress - {} is a valid three word address", w3w);
         }
         else {
-            log.error("validateThreeWordAddress - {} is not a valid three word address", w3w);
-            throw new BadRequestException("3wa address supplied has invalid format");
+            ThreeWordAddressSuggestions threeWordAddressSuggestions = service.getAutoSuggestions(report);
+            if(threeWordAddressSuggestions.getSuggestions() != null && !threeWordAddressSuggestions.getSuggestions().isEmpty()) {
+                log.error("validateThreeWordAddress - 3wa is not recognized, providing suggestions to user = {}", threeWordAddressSuggestions.getSuggestions());
+                throw new AutoSuggestException(threeWordAddressSuggestions.getMessage(), threeWordAddressSuggestions.getSuggestions());
+            }
+            else {
+                log.error("validateThreeWordAddress - {} is not a valid three word address", w3w);
+                throw new BadRequestException("3wa address supplied has invalid format");
+            }
         }
     }
 
