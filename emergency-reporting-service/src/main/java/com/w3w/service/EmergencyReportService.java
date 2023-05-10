@@ -63,7 +63,7 @@ public class EmergencyReportService implements IEmergencyReportService {
             return autosuggest.getSuggestions();
         else {
             log.error("autoSuggestWithoutFocus - w3w api call failed with error = {}", autosuggest.getError());
-            throw new ServiceRuntimeException(autosuggest.getError().getMessage());
+            throw new W3WApiException(autosuggest.getError().getKey(), autosuggest.getError().getMessage());
         }
     }
 
@@ -77,7 +77,7 @@ public class EmergencyReportService implements IEmergencyReportService {
             return autosuggest.getSuggestions();
         else {
             log.error("autoSuggestWithFocus - w3w api call failed with error = {}", autosuggest.getError());
-            throw new ServiceRuntimeException(autosuggest.getError().getMessage());
+            throw new W3WApiException(autosuggest.getError().getKey(), autosuggest.getError().getMessage());
         }
     }
 
@@ -113,7 +113,7 @@ public class EmergencyReportService implements IEmergencyReportService {
             return words.getWords();
         else {
             log.error("convertCoordsTo3wa - w3w api call failed with error = {}", words.getError());
-            throw new ServiceRuntimeException(words.getError().getMessage());
+            throw new W3WApiException(words.getError().getKey(), words.getError().getMessage());
         }
     }
 
@@ -127,7 +127,7 @@ public class EmergencyReportService implements IEmergencyReportService {
             return coordinates.getCoordinates();
         else {
             log.error("convert3waToCoords - w3w api call failed with error = {}", coordinates.getError());
-            throw new ServiceRuntimeException(coordinates.getError().getMessage());
+            throw new W3WApiException(coordinates.getError().getKey(), coordinates.getError().getMessage());
         }
     }
 
@@ -142,5 +142,10 @@ public class EmergencyReportService implements IEmergencyReportService {
     @Override
     public String convertEnglishToWelsh(EmergencyReport emergencyReport) {
         return convertCoordsTo3wa(emergencyReport.getLatitude(), emergencyReport.getLongitude(), Constants.WELSH_LANGUAGE_CODE);
+    }
+
+    @Override
+    public String convertWelshToEnglish(EmergencyReport emergencyReport) {
+        return convertCoordsTo3wa(emergencyReport.getLatitude(), emergencyReport.getLongitude(), Constants.ENGLISH_LANGUAGE_CODE);
     }
 }
