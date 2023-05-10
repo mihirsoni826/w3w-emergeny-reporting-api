@@ -89,7 +89,7 @@ public class EmergencyReportService implements IEmergencyReportService {
         Double lon = emergencyReport.getLongitude();
         String threeWordAddress = emergencyReport.getThreeWordAddress();
 
-        if(lat == null && lon == null && threeWordAddress != null) {
+        if((lat == null || lon == null) && threeWordAddress != null) {
             com.what3words.javawrapper.response.Coordinates coordinates = convert3waToCoords(threeWordAddress);
             emergencyReport.setLatitude(coordinates.getLat());
             emergencyReport.setLongitude(coordinates.getLng());
