@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.HttpClientErrorException.MethodNotAllowed;
 
 @ControllerAdvice
 public class ExceptionHandlerAdvice {
@@ -43,6 +44,17 @@ public class ExceptionHandlerAdvice {
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(errorMessage);
+    }
+
+    @ExceptionHandler(MethodNotAllowed.class)
+    public ResponseEntity<ErrorMessage> handleMethodNotAllowedException(MethodNotAllowed e) {
+        ErrorMessage errorMessage = new ErrorMessage();
+        errorMessage.setErrorCode(HttpStatus.METHOD_NOT_ALLOWED.toString());
+        errorMessage.setErrorMessage(e.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.METHOD_NOT_ALLOWED)
                 .body(errorMessage);
     }
 
