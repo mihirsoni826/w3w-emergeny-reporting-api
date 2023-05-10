@@ -17,7 +17,7 @@ import java.util.List;
 
 @Service
 @Slf4j
-public class EmergencyReportService implements IEmergencyReportService {
+public class EmergencyReportServiceImpl implements IEmergencyReportService {
 
     private final What3WordsV3 api = new What3WordsV3(Constants.API_KEY);
 
@@ -39,6 +39,12 @@ public class EmergencyReportService implements IEmergencyReportService {
         return threeWordAddressSuggestions;
     }
 
+    /**
+     * Method takes in the suggestions as received from w3w api and filters out some fields
+     * @param suggestions 3wa suggestions as received from the w3w api
+     * @return List of Filtered Suggestions
+     * @see FilteredSuggestion
+     */
     private List<FilteredSuggestion> filterSuggestions(List<Suggestion> suggestions) {
         List<FilteredSuggestion> filteredSuggestions = new ArrayList<>();
 
@@ -54,6 +60,15 @@ public class EmergencyReportService implements IEmergencyReportService {
         return filteredSuggestions;
     }
 
+    /**
+     * This method is used to get suggestions for an incorrect three word address by calling the w3w <b>/autosuggest</b> api.
+     * <br>
+     * This method passes <b>country code</b> as 'GB' because the emergency services are only based in UK
+     * @param threeWordAddress incorrect three word address
+     * @return List of suggestions as received from the w3w api
+     * @throws W3WApiException if w3w api call is not successful
+     * @see W3WApiException
+     */
     private List<Suggestion> autoSuggestWithoutFocus(String threeWordAddress) {
         Autosuggest autosuggest = api.autosuggest(threeWordAddress)
                                     .clipToCountry(Constants.GREAT_BRITAIN_COUNTRY_CODE)
@@ -62,11 +77,22 @@ public class EmergencyReportService implements IEmergencyReportService {
         if(autosuggest.isSuccessful())
             return autosuggest.getSuggestions();
         else {
-            log.error("autoSuggestWithoutFocus - w3w api call failed with error = {}", autosuggest.getError().getMessage());
+            log.error("autoSuggestWithoutFocus - w3w api call failed for 3wa {} with error = {}", threeWordAddress, autosuggest.getError().getMessage());
             throw new W3WApiException(autosuggest.getError().getKey(), autosuggest.getError().getMessage());
         }
     }
 
+    /**
+     * This method is used to get suggestions for an incorrect three word address by calling the w3w <b>/autosuggest</b> api.
+     * <br>
+     * This method passes <b>country code</b> as 'GB' because the emergency services are only based in UK and <b>focus</b> as the coordinates in the payload so as to get more accurate and relevant results
+     * @param lat latitude in the EmergencyReport object
+     * @param lon longitude in the EmergencyReport object
+     * @param threeWordAddress incorrect three word address to get suggestions for
+     * @return List of suggestions as received from the w3w api
+     * @throws W3WApiException if w3w api call is not successful
+     * @see W3WApiException
+     */
     private List<Suggestion> autoSuggestWithFocus(Double lat, Double lon, String threeWordAddress) {
         Autosuggest autosuggest = api.autosuggest(threeWordAddress)
                                     .clipToCountry(Constants.GREAT_BRITAIN_COUNTRY_CODE)
@@ -76,7 +102,7 @@ public class EmergencyReportService implements IEmergencyReportService {
         if(autosuggest.isSuccessful())
             return autosuggest.getSuggestions();
         else {
-            log.error("autoSuggestWithFocus - w3w api call failed with error = {}", autosuggest.getError().getMessage());
+            log.error("autoSuggestWithFocus - w3w api call failed for 3wa {} with error = {}", threeWordAddress, autosuggest.getError().getMessage());
             throw new W3WApiException(autosuggest.getError().getKey(), autosuggest.getError().getMessage());
         }
     }
@@ -102,6 +128,15 @@ public class EmergencyReportService implements IEmergencyReportService {
         log.info("convertAddressFormats - Addresses converted successfully");
     }
 
+    /**
+     * Method to convert coordinates to a valid three word address using the w3w <b>/convert-to-3wa</b> api
+     * @param lat Latitude of the address
+     * @param lon Longitude of the address
+     * @param lang Language in which we want the three word address from the w3w api
+     * @return Three word address in the language provided as argument
+     * @throws W3WApiException If w3w api fails to convert coordinates to a valid three word address
+     * @see W3WApiException
+     */
     private String convertCoordsTo3wa(Double lat, Double lon, String lang) {
         log.info("Converting coordinates ({},{}) to three word address", lat, lon);
 
@@ -117,6 +152,21 @@ public class EmergencyReportService implements IEmergencyReportService {
         }
     }
 
+    /**
+     * Method to convert a three word address to a set of valid coordinates using the w3w <b>/convert-to-coordinates</b> api
+     * <br>
+     * The three word address passed to w3w api could still be invalid after the validation check - ///filled.count.soap and ///filled.count.so
+     * both look like valid three word addresses as per the regex check. Even though these <i><b>look like</b></i> valid addresses, they are not valid.
+     * <br>
+     * To handle this edge-case, we check the error code from w3w api response, if error code is 'BadWords', we call the w3w <b>/autosuggest</b> api to get
+     * valid suggestions for the incorrect three word address provided.
+     * @param emergencyReport EmergencyReport request/response object
+     * @return Coordinates of the three word address
+     * @throws W3WApiException If w3w api fails to convert coordinates to a valid three word address
+     * @see com.w3w.validation.ServiceValidator#is3waValidRegex
+     * @see #getAutoSuggestions
+     * @see #process3waSuggestionsResponse
+     */
     private com.what3words.javawrapper.response.Coordinates convert3waToCoords(EmergencyReport emergencyReport) {
         String threeWordAddress = emergencyReport.getThreeWordAddress();
         log.info("Converting three word address {} to coordinates", threeWordAddress);
