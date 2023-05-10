@@ -22,16 +22,12 @@ public class ServiceValidator {
     }
 
     public void validateRequestPayload(EmergencyReport report) {
-        validateCombinationOfLatLong3wa(report);
-    }
-
-    private void validateCombinationOfLatLong3wa(EmergencyReport report) {
         Double lat = report.getLatitude();
         Double lon = report.getLongitude();
         String w3w = report.getThreeWordAddress();
 
         if(lat == null && lon == null && w3w == null) {
-            log.error("validateCombinationOfLatLong3wa - Latitude, Longitude and 3 word address are missing. Please provide either both the coordinates or the 3 work address");
+            log.error("validateCombinationOfLatLong3wa - Latitude, Longitude and 3 word address are missing. Please provide either both the coordinates or the 3 word address");
             throw new BadRequestException("Please provide either both the coordinates or the 3 work address");
         }
         if(w3w != null && !w3w.isEmpty()) {
