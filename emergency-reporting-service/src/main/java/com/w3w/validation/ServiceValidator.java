@@ -5,11 +5,9 @@ import com.w3w.exception.BadRequestException;
 import com.w3w.model.EmergencyReport;
 import com.w3w.model.ThreeWordAddressSuggestions;
 import com.w3w.service.IEmergencyReportService;
-import com.what3words.javawrapper.response.Suggestion;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

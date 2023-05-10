@@ -1,7 +1,6 @@
 package com.w3w.exception;
 
 import com.w3w.model.FilteredSuggestion;
-import com.what3words.javawrapper.response.Suggestion;
 import lombok.Data;
 
 import java.util.List;

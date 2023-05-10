@@ -6,8 +6,7 @@ import com.w3w.model.FilteredSuggestion;
 import com.w3w.model.ThreeWordAddressSuggestions;
 import com.what3words.javawrapper.What3WordsV3;
 import com.what3words.javawrapper.request.Coordinates;
-import com.what3words.javawrapper.response.Autosuggest;
-import com.what3words.javawrapper.response.Suggestion;
+import com.what3words.javawrapper.response.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +20,8 @@ public class EmergencyReportService implements IEmergencyReportService {
     private final String API_KEY = "318QA8P4";
     private final What3WordsV3 api = new What3WordsV3(API_KEY);
     private final String GB = "GB";
+
+    private final String EN = "en";
 
     @Override
     public ThreeWordAddressSuggestions getAutoSuggestions(EmergencyReport report) {
@@ -82,5 +83,43 @@ public class EmergencyReportService implements IEmergencyReportService {
         }
     }
 
+    @Override
+    public void convertAddressFormats(EmergencyReport emergencyReport) {
+        log.info("convertAddressFormats called to convert addresses into other format");
 
+        Double lat = emergencyReport.getLatitude();
+        Double lon = emergencyReport.getLongitude();
+        String threeWordAddress = emergencyReport.getThreeWordAddress();
+
+        if(lat == null && lon == null && threeWordAddress != null) {
+            com.what3words.javawrapper.response.Coordinates coordinates = convert3waToCoords(threeWordAddress);
+            emergencyReport.setLatitude(coordinates.getLat());
+            emergencyReport.setLongitude(coordinates.getLng());
+
+        }
+        else if(lat != null && lon != null && threeWordAddress == null) {
+            emergencyReport.setThreeWordAddress(convertCoordsTo3wa(lat, lon));
+        }
+
+        log.info("convertAddressFormats - Addresses converted successfully");
+    }
+
+    private String convertCoordsTo3wa(Double lat, Double lon) {
+        log.info("Converting coordinates ({},{}) to three word address", lat, lon);
+
+        ConvertTo3WA words = api.convertTo3wa(new Coordinates(lat, lon))
+                .language(EN)
+                .execute();
+
+        return words.getWords();
+    }
+
+    private com.what3words.javawrapper.response.Coordinates convert3waToCoords(String threeWordAddress) {
+        log.info("Converting three word address ///{} to coordinates", threeWordAddress);
+
+        ConvertToCoordinates coordinates = api.convertToCoordinates(threeWordAddress)
+                .execute();
+
+        return coordinates.getCoordinates();
+    }
 }
