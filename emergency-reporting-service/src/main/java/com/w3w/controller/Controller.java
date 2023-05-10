@@ -3,6 +3,7 @@ package com.w3w.controller;
 import com.w3w.model.EmergencyReport;
 import com.w3w.model.ThreeWordAddress;
 import com.w3w.service.IEmergencyReportService;
+import com.w3w.utils.Constants;
 import com.w3w.validation.ServiceValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,12 +29,11 @@ public class Controller {
         this.service = service;
     }
 
-    @PostMapping(value = "/reports", produces = "application/json", consumes = "application/json")
+    @PostMapping(value = "/reports", produces = Constants.APPLICATION_JSON, consumes = Constants.APPLICATION_JSON)
     public ResponseEntity<EmergencyReport> convertAddressFormat(@RequestBody EmergencyReport payload) {
         log.info("Controller - received request at /reports for payload = {}", payload);
 
         validator.validateRequestPayload(payload);
-        log.info("Controller - Request payload validated successfully!");
 
         service.convertAddressFormats(payload);
 
@@ -41,7 +41,7 @@ public class Controller {
         return new ResponseEntity<>(payload, HttpStatus.OK);
     }
 
-    @PostMapping(value = "/welsh-convert", produces = "application/json", consumes = "application/json")
+    @PostMapping(value = "/welsh-convert", produces = Constants.APPLICATION_JSON, consumes = Constants.APPLICATION_JSON)
     public ResponseEntity<ThreeWordAddress> handleWelshConvert(@RequestBody ThreeWordAddress payload) {
         log.info("Controller - received request at /welsh-convert for payload = {}", payload);
 
@@ -50,7 +50,6 @@ public class Controller {
 
         validator.validateRequestPayload(emergencyReport);
         service.CreateEmergencyReportPOJOFrom3wa(emergencyReport, payload);
-        log.info("Controller - Request payload validated successfully!");
 
         String welsh3wa = service.convertEnglishToWelsh(emergencyReport);
         log.info("English Three word address converted to Welsh successfully!");
@@ -61,7 +60,7 @@ public class Controller {
         return new ResponseEntity<>(payload, HttpStatus.OK);
     }
 
-    @PostMapping(value = "/welsh-3wa", produces = "application/json", consumes = "application/json")
+    @PostMapping(value = "/welsh-3wa", produces = Constants.APPLICATION_JSON, consumes = Constants.APPLICATION_JSON)
     public ResponseEntity<ThreeWordAddress> handleEnglishConvert(@RequestBody ThreeWordAddress payload) {
         log.info("Controller - received request at /welsh-3wa for payload = {}", payload);
 
@@ -70,7 +69,6 @@ public class Controller {
 
         validator.validateRequestPayload(emergencyReport);
         service.CreateEmergencyReportPOJOFrom3wa(emergencyReport, payload);
-        log.info("Controller - Request payload validated successfully!");
 
         String english3wa = service.convertWelshToEnglish(emergencyReport);
         log.info("Welsh Three word address converted to English successfully!");

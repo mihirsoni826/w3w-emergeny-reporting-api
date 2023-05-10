@@ -27,7 +27,7 @@ public class ServiceValidator {
         String w3w = report.getThreeWordAddress();
 
         if(lat == null && lon == null && w3w == null) {
-            log.error("validateCombinationOfLatLong3wa - Latitude, Longitude and 3 word address are missing. Please provide either both the coordinates or the 3 word address");
+            log.error("validateRequestPayload - Latitude, Longitude and 3 word address are missing. Please provide either both the coordinates or the 3 word address");
             throw new BadRequestException("Please provide either both the coordinates or the 3 word address");
         }
         if(w3w != null) {
@@ -40,7 +40,7 @@ public class ServiceValidator {
         if(lat != null && lon != null) {
             isUKLatAndLong(lat, lon);
         }
-
+        log.info("Request payload validated successfully!");
     }
 
     private void validateThreeWordAddress(EmergencyReport report) {
@@ -54,14 +54,14 @@ public class ServiceValidator {
                 throw new AutoSuggestException(threeWordAddressSuggestions.getMessage(), threeWordAddressSuggestions.getSuggestions());
             }
             else {
-                log.error("validateThreeWordAddress - {} is not a valid three word address", report.getThreeWordAddress());
+                log.error("validateThreeWordAddress - w3w api did not return any suggestions for {}", report.getThreeWordAddress());
                 throw new BadRequestException("3wa address supplied has invalid format");
             }
         }
     }
 
     private boolean is3waValidRegex(String threeWordAddress) {
-        String regex = "^/*(?:(?:\\p{L}\\p{M}*)+[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+|(?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3}[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3}[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3})$";
+        final String regex = "^/*(?:(?:\\p{L}\\p{M}*)+[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+|(?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3}[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3}[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3})$";
 
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(threeWordAddress);

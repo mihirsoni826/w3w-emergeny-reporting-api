@@ -56,13 +56,13 @@ public class EmergencyReportService implements IEmergencyReportService {
 
     private List<Suggestion> autoSuggestWithoutFocus(String threeWordAddress) {
         Autosuggest autosuggest = api.autosuggest(threeWordAddress)
-                .clipToCountry(Constants.GREAT_BRITAIN_COUNTRY_CODE)
-                .execute();
+                                    .clipToCountry(Constants.GREAT_BRITAIN_COUNTRY_CODE)
+                                    .execute();
 
         if(autosuggest.isSuccessful())
             return autosuggest.getSuggestions();
         else {
-            log.error("autoSuggestWithoutFocus - w3w api call failed with error = {}", autosuggest.getError());
+            log.error("autoSuggestWithoutFocus - w3w api call failed with error = {}", autosuggest.getError().getMessage());
             throw new W3WApiException(autosuggest.getError().getKey(), autosuggest.getError().getMessage());
         }
     }
@@ -76,7 +76,7 @@ public class EmergencyReportService implements IEmergencyReportService {
         if(autosuggest.isSuccessful())
             return autosuggest.getSuggestions();
         else {
-            log.error("autoSuggestWithFocus - w3w api call failed with error = {}", autosuggest.getError());
+            log.error("autoSuggestWithFocus - w3w api call failed with error = {}", autosuggest.getError().getMessage());
             throw new W3WApiException(autosuggest.getError().getKey(), autosuggest.getError().getMessage());
         }
     }
@@ -106,13 +106,13 @@ public class EmergencyReportService implements IEmergencyReportService {
         log.info("Converting coordinates ({},{}) to three word address", lat, lon);
 
         ConvertTo3WA words = api.convertTo3wa(new Coordinates(lat, lon))
-                .language(lang)
-                .execute();
+                                .language(lang)
+                                .execute();
 
         if(words.isSuccessful())
             return words.getWords();
         else {
-            log.error("convertCoordsTo3wa - w3w api call failed with error = {}", words.getError());
+            log.error("convertCoordsTo3wa - w3w api call failed with error = {}", words.getError().getMessage());
             throw new W3WApiException(words.getError().getKey(), words.getError().getMessage());
         }
     }
@@ -121,12 +121,12 @@ public class EmergencyReportService implements IEmergencyReportService {
         log.info("Converting three word address {} to coordinates", threeWordAddress);
 
         ConvertToCoordinates coordinates = api.convertToCoordinates(threeWordAddress)
-                .execute();
+                                                .execute();
 
         if(coordinates.isSuccessful())
             return coordinates.getCoordinates();
         else {
-            log.error("convert3waToCoords - w3w api call failed with error = {}", coordinates.getError());
+            log.error("convert3waToCoords - w3w api call failed with error = {}", coordinates.getError().getMessage());
             throw new W3WApiException(coordinates.getError().getKey(), coordinates.getError().getMessage());
         }
     }
@@ -134,7 +134,6 @@ public class EmergencyReportService implements IEmergencyReportService {
     @Override
     public void CreateEmergencyReportPOJOFrom3wa(EmergencyReport emergencyReport, ThreeWordAddress payload) {
         com.what3words.javawrapper.response.Coordinates coordinates = convert3waToCoords(payload.getThreeWordAddress());
-        emergencyReport.setThreeWordAddress(payload.getThreeWordAddress());
         emergencyReport.setLatitude(coordinates.getLat());
         emergencyReport.setLongitude(coordinates.getLng());
     }
