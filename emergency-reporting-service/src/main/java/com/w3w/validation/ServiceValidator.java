@@ -28,9 +28,13 @@ public class ServiceValidator {
 
         if(lat == null && lon == null && w3w == null) {
             log.error("validateCombinationOfLatLong3wa - Latitude, Longitude and 3 word address are missing. Please provide either both the coordinates or the 3 word address");
-            throw new BadRequestException("Please provide either both the coordinates or the 3 work address");
+            throw new BadRequestException("Please provide either both the coordinates or the 3 word address");
         }
-        if(w3w != null && !w3w.isEmpty()) {
+        if(w3w != null) {
+            if(w3w.isEmpty()) {
+                log.error("validateRequestPayload - words should be provided");
+                throw new BadRequestException("words should be provided");
+            }
             validateThreeWordAddress(report);
         }
         if(lat != null && lon != null) {
@@ -40,14 +44,8 @@ public class ServiceValidator {
     }
 
     private void validateThreeWordAddress(EmergencyReport report) {
-        String regex = "^/*(?:(?:\\p{L}\\p{M}*)+[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+|(?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3}[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3}[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3})$";
-
-        String w3w = report.getThreeWordAddress();
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(w3w);
-
-        if (matcher.find()) {
-            log.info("validateThreeWordAddress - {} is a valid three word address", w3w);
+        if(is3waValidRegex(report.getThreeWordAddress())) {
+            log.info("validateThreeWordAddress - {} is a valid three word address", report.getThreeWordAddress());
         }
         else {
             ThreeWordAddressSuggestions threeWordAddressSuggestions = service.getAutoSuggestions(report);
@@ -56,10 +54,19 @@ public class ServiceValidator {
                 throw new AutoSuggestException(threeWordAddressSuggestions.getMessage(), threeWordAddressSuggestions.getSuggestions());
             }
             else {
-                log.error("validateThreeWordAddress - {} is not a valid three word address", w3w);
+                log.error("validateThreeWordAddress - {} is not a valid three word address", report.getThreeWordAddress());
                 throw new BadRequestException("3wa address supplied has invalid format");
             }
         }
+    }
+
+    private boolean is3waValidRegex(String threeWordAddress) {
+        String regex = "^/*(?:(?:\\p{L}\\p{M}*)+[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+|(?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3}[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3}[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3})$";
+
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(threeWordAddress);
+
+        return matcher.find();
     }
 
     private void isUKLatAndLong(Double lat, Double lon) {

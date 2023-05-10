@@ -3,7 +3,9 @@ package com.w3w.service;
 import com.w3w.exception.*;
 import com.w3w.model.EmergencyReport;
 import com.w3w.model.FilteredSuggestion;
+import com.w3w.model.ThreeWordAddress;
 import com.w3w.model.ThreeWordAddressSuggestions;
+import com.w3w.utils.Constants;
 import com.what3words.javawrapper.What3WordsV3;
 import com.what3words.javawrapper.request.Coordinates;
 import com.what3words.javawrapper.response.*;
@@ -17,10 +19,7 @@ import java.util.List;
 @Slf4j
 public class EmergencyReportService implements IEmergencyReportService {
 
-    private final String API_KEY = "318QA8P4";
-    private final What3WordsV3 api = new What3WordsV3(API_KEY);
-    private final String GB = "GB";
-    private final String EN = "en";
+    private final What3WordsV3 api = new What3WordsV3(Constants.API_KEY);
 
     @Override
     public ThreeWordAddressSuggestions getAutoSuggestions(EmergencyReport report) {
@@ -57,7 +56,7 @@ public class EmergencyReportService implements IEmergencyReportService {
 
     private List<Suggestion> autoSuggestWithoutFocus(String threeWordAddress) {
         Autosuggest autosuggest = api.autosuggest(threeWordAddress)
-                .clipToCountry(GB)
+                .clipToCountry(Constants.GREAT_BRITAIN_COUNTRY_CODE)
                 .execute();
 
         if(autosuggest.isSuccessful())
@@ -70,7 +69,7 @@ public class EmergencyReportService implements IEmergencyReportService {
 
     private List<Suggestion> autoSuggestWithFocus(Double lat, Double lon, String threeWordAddress) {
         Autosuggest autosuggest = api.autosuggest(threeWordAddress)
-                                    .clipToCountry(GB)
+                                    .clipToCountry(Constants.GREAT_BRITAIN_COUNTRY_CODE)
                                     .focus(new Coordinates(lat, lon))
                                     .execute();
 
@@ -97,17 +96,17 @@ public class EmergencyReportService implements IEmergencyReportService {
 
         }
         else if(lat != null && lon != null && threeWordAddress == null) {
-            emergencyReport.setThreeWordAddress(convertCoordsTo3wa(lat, lon));
+            emergencyReport.setThreeWordAddress(convertCoordsTo3wa(lat, lon, Constants.ENGLISH_LANGUAGE_CODE));
         }
 
         log.info("convertAddressFormats - Addresses converted successfully");
     }
 
-    private String convertCoordsTo3wa(Double lat, Double lon) {
+    private String convertCoordsTo3wa(Double lat, Double lon, String lang) {
         log.info("Converting coordinates ({},{}) to three word address", lat, lon);
 
         ConvertTo3WA words = api.convertTo3wa(new Coordinates(lat, lon))
-                .language(EN)
+                .language(lang)
                 .execute();
 
         if(words.isSuccessful())
@@ -130,5 +129,18 @@ public class EmergencyReportService implements IEmergencyReportService {
             log.error("convert3waToCoords - w3w api call failed with error = {}", coordinates.getError());
             throw new ServiceRuntimeException(coordinates.getError().getMessage());
         }
+    }
+
+    @Override
+    public void CreateEmergencyReportPOJOFrom3wa(EmergencyReport emergencyReport, ThreeWordAddress payload) {
+        com.what3words.javawrapper.response.Coordinates coordinates = convert3waToCoords(payload.getThreeWordAddress());
+        emergencyReport.setThreeWordAddress(payload.getThreeWordAddress());
+        emergencyReport.setLatitude(coordinates.getLat());
+        emergencyReport.setLongitude(coordinates.getLng());
+    }
+
+    @Override
+    public String convertEnglishToWelsh(EmergencyReport emergencyReport) {
+        return convertCoordsTo3wa(emergencyReport.getLatitude(), emergencyReport.getLongitude(), Constants.WELSH_LANGUAGE_CODE);
     }
 }
