@@ -90,7 +90,7 @@ public class EmergencyReportService implements IEmergencyReportService {
         String threeWordAddress = emergencyReport.getThreeWordAddress();
 
         if((lat == null || lon == null) && threeWordAddress != null) {
-            com.what3words.javawrapper.response.Coordinates coordinates = convert3waToCoords(threeWordAddress);
+            com.what3words.javawrapper.response.Coordinates coordinates = convert3waToCoords(emergencyReport);
             emergencyReport.setLatitude(coordinates.getLat());
             emergencyReport.setLongitude(coordinates.getLng());
 
@@ -112,12 +112,13 @@ public class EmergencyReportService implements IEmergencyReportService {
         if(words.isSuccessful())
             return words.getWords();
         else {
-            log.error("convertCoordsTo3wa - w3w api call failed with error = {}", words.getError().getMessage());
+            log.error("convertCoordsTo3wa - w3w api failed to convert ({},{}) to 3wa with error = {}", lat, lon, words.getError().getMessage());
             throw new W3WApiException(words.getError().getKey(), words.getError().getMessage());
         }
     }
 
-    private com.what3words.javawrapper.response.Coordinates convert3waToCoords(String threeWordAddress) {
+    private com.what3words.javawrapper.response.Coordinates convert3waToCoords(EmergencyReport emergencyReport) {
+        String threeWordAddress = emergencyReport.getThreeWordAddress();
         log.info("Converting three word address {} to coordinates", threeWordAddress);
 
         ConvertToCoordinates coordinates = api.convertToCoordinates(threeWordAddress)
@@ -126,14 +127,32 @@ public class EmergencyReportService implements IEmergencyReportService {
         if(coordinates.isSuccessful())
             return coordinates.getCoordinates();
         else {
-            log.error("convert3waToCoords - w3w api call failed with error = {}", coordinates.getError().getMessage());
+            if(coordinates.getError().getKey().equals(Constants.BAD_WORDS_ERROR_CODE)) {
+                ThreeWordAddressSuggestions threeWordAddressSuggestions = getAutoSuggestions(emergencyReport);
+                process3waSuggestionsResponse(threeWordAddressSuggestions, threeWordAddress);
+            }
+            log.error("convert3waToCoords - w3w api failed to convert {} to coordinates with error = {}", threeWordAddress, coordinates.getError().getMessage());
             throw new W3WApiException(coordinates.getError().getKey(), coordinates.getError().getMessage());
         }
     }
 
     @Override
+    public void process3waSuggestionsResponse(ThreeWordAddressSuggestions threeWordAddressSuggestions, String threeWordAddress) {
+        if(threeWordAddressSuggestions.getSuggestions() != null && !threeWordAddressSuggestions.getSuggestions().isEmpty()) {
+            log.error("validateThreeWordAddress - provided 3wa {} is not recognized, providing suggestions to user = {}",
+                    threeWordAddress, threeWordAddressSuggestions.getSuggestions());
+
+            throw new AutoSuggestException(threeWordAddressSuggestions.getMessage(), threeWordAddressSuggestions.getSuggestions());
+        }
+        else {
+            log.error("validateThreeWordAddress - w3w api did not return any suggestions for {}", threeWordAddress);
+            throw new BadRequestException("3wa address supplied has invalid format");
+        }
+    }
+
+    @Override
     public void CreateEmergencyReportPOJOFrom3wa(EmergencyReport emergencyReport, ThreeWordAddress payload) {
-        com.what3words.javawrapper.response.Coordinates coordinates = convert3waToCoords(payload.getThreeWordAddress());
+        com.what3words.javawrapper.response.Coordinates coordinates = convert3waToCoords(emergencyReport);
         emergencyReport.setLatitude(coordinates.getLat());
         emergencyReport.setLongitude(coordinates.getLng());
     }

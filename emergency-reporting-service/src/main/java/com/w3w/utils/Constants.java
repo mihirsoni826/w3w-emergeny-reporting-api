@@ -7,5 +7,6 @@ public class Constants {
     public static final String ENGLISH_LANGUAGE_CODE = "en";
     public static final String WELSH_LANGUAGE_CODE = "cy";
     public static final String APPLICATION_JSON = "application/json";
+    public static final String BAD_WORDS_ERROR_CODE = "BadWords";
 
 }

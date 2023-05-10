@@ -32,8 +32,8 @@ public class ServiceValidator {
         }
         if(w3w != null) {
             if(w3w.isEmpty()) {
-                log.error("validateRequestPayload - words should be provided");
-                throw new BadRequestException("words should be provided");
+                log.error("validateRequestPayload - words or 'null' should be provided");
+                throw new BadRequestException("words or 'null' should be provided");
             }
             validateThreeWordAddress(report);
         }
@@ -49,14 +49,7 @@ public class ServiceValidator {
         }
         else {
             ThreeWordAddressSuggestions threeWordAddressSuggestions = service.getAutoSuggestions(report);
-            if(threeWordAddressSuggestions.getSuggestions() != null && !threeWordAddressSuggestions.getSuggestions().isEmpty()) {
-                log.error("validateThreeWordAddress - 3wa is not recognized, providing suggestions to user = {}", threeWordAddressSuggestions.getSuggestions());
-                throw new AutoSuggestException(threeWordAddressSuggestions.getMessage(), threeWordAddressSuggestions.getSuggestions());
-            }
-            else {
-                log.error("validateThreeWordAddress - w3w api did not return any suggestions for {}", report.getThreeWordAddress());
-                throw new BadRequestException("3wa address supplied has invalid format");
-            }
+            service.process3waSuggestionsResponse(threeWordAddressSuggestions, report.getThreeWordAddress());
         }
     }
 
@@ -70,14 +63,23 @@ public class ServiceValidator {
     }
 
     private void isUKLatAndLong(Double lat, Double lon) {
-
-        if (lat < 49.8 || lat > 58.7 || lon < -8.6 || lon > 1.8) {
-            log.error("isUKLatAndLong - Coordinates are outside UK");
-            throw new BadRequestException("Coordinates are outside UK. Please provide UK coordinates");
+        if(coordinatesInValidRange(lat, lon)) {
+            if (lat < 49.8 || lat > 58.7 || lon < -8.6 || lon > 1.8) {
+                log.error("isUKLatAndLong - Coordinates are outside UK");
+                throw new BadRequestException("Coordinates are outside UK. Please provide UK coordinates");
+            }
+            else {
+                log.info("isUKLatAndLong - Coordinates are inside UK");
+            }
         }
         else {
-            log.info("isUKLatAndLong - Coordinates are inside UK");
+            log.error("isUKLatAndLong - provided coordinates ({},{}) are invalid", lat, lon);
+            throw new BadRequestException("Coordinates are invalid. Please provide valid latitude and longitude - latitudes (-90 to 90) and longitudes (-180 to 180)");
         }
+    }
+
+    private boolean coordinatesInValidRange(Double lat, Double lon) {
+        return ((lat >= -90 && lat <= 90) && (lon >= -180 && lon <= 180));
     }
 
 }
