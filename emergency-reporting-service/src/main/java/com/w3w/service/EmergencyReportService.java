@@ -1,6 +1,6 @@
 package com.w3w.service;
 
-import com.w3w.exception.BadRequestException;
+import com.w3w.exception.*;
 import com.w3w.model.EmergencyReport;
 import com.w3w.model.FilteredSuggestion;
 import com.w3w.model.ThreeWordAddressSuggestions;
@@ -20,7 +20,6 @@ public class EmergencyReportService implements IEmergencyReportService {
     private final String API_KEY = "318QA8P4";
     private final What3WordsV3 api = new What3WordsV3(API_KEY);
     private final String GB = "GB";
-
     private final String EN = "en";
 
     @Override
@@ -65,7 +64,7 @@ public class EmergencyReportService implements IEmergencyReportService {
             return autosuggest.getSuggestions();
         else {
             log.error("autoSuggestWithoutFocus - w3w api call failed with error = {}", autosuggest.getError());
-            throw new BadRequestException("3wa address supplied has invalid format");
+            throw new ServiceRuntimeException(autosuggest.getError().getMessage());
         }
     }
 
@@ -79,7 +78,7 @@ public class EmergencyReportService implements IEmergencyReportService {
             return autosuggest.getSuggestions();
         else {
             log.error("autoSuggestWithFocus - w3w api call failed with error = {}", autosuggest.getError());
-            throw new BadRequestException("3wa address supplied has invalid format");
+            throw new ServiceRuntimeException(autosuggest.getError().getMessage());
         }
     }
 
@@ -111,15 +110,25 @@ public class EmergencyReportService implements IEmergencyReportService {
                 .language(EN)
                 .execute();
 
-        return words.getWords();
+        if(words.isSuccessful())
+            return words.getWords();
+        else {
+            log.error("convertCoordsTo3wa - w3w api call failed with error = {}", words.getError());
+            throw new ServiceRuntimeException(words.getError().getMessage());
+        }
     }
 
     private com.what3words.javawrapper.response.Coordinates convert3waToCoords(String threeWordAddress) {
-        log.info("Converting three word address ///{} to coordinates", threeWordAddress);
+        log.info("Converting three word address {} to coordinates", threeWordAddress);
 
         ConvertToCoordinates coordinates = api.convertToCoordinates(threeWordAddress)
                 .execute();
 
-        return coordinates.getCoordinates();
+        if(coordinates.isSuccessful())
+            return coordinates.getCoordinates();
+        else {
+            log.error("convert3waToCoords - w3w api call failed with error = {}", coordinates.getError());
+            throw new ServiceRuntimeException(coordinates.getError().getMessage());
+        }
     }
 }
