@@ -19,7 +19,15 @@ import java.util.List;
 @Slf4j
 public class EmergencyReportServiceImpl implements IEmergencyReportService {
 
-    private final What3WordsV3 api = new What3WordsV3(Constants.API_KEY);
+    private final What3WordsV3 api;
+
+    public EmergencyReportServiceImpl() {
+        this.api = new What3WordsV3(Constants.API_KEY);
+    }
+
+    public EmergencyReportServiceImpl(String apiKey) {
+        this.api = new What3WordsV3(apiKey);
+    }
 
     @Override
     public ThreeWordAddressSuggestions getAutoSuggestions(EmergencyReport report) {

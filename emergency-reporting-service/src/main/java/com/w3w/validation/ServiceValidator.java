@@ -4,6 +4,7 @@ import com.w3w.exception.BadRequestException;
 import com.w3w.model.EmergencyReport;
 import com.w3w.model.ThreeWordAddressSuggestions;
 import com.w3w.service.IEmergencyReportService;
+import com.w3w.utils.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -56,7 +57,7 @@ public class ServiceValidator {
      * @see IEmergencyReportService#process3waSuggestionsResponse 
      */
     private void validateThreeWordAddress(EmergencyReport report) {
-        if(is3waValidRegex(report.getThreeWordAddress())) {
+        if(is3waValidRegex(report.getThreeWordAddress(), Constants.VALID_3WA_REGEX)) {
             log.info("validateThreeWordAddress - {} is a valid three word address", report.getThreeWordAddress());
         }
         else {
@@ -71,9 +72,7 @@ public class ServiceValidator {
      * @param threeWordAddress The three word address provided in the request payload
      * @return true/false based on whether the three word address looks valid
      */
-    private boolean is3waValidRegex(String threeWordAddress) {
-        final String regex = "^/*(?:(?:\\p{L}\\p{M}*)+[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+|(?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3}[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3}[.｡。･・︒។։။۔።।](?:\\p{L}\\p{M}*)+([\u0020\u00A0](?:\\p{L}\\p{M}*)+){1,3})$";
-
+    public boolean is3waValidRegex(String threeWordAddress, String regex) {
         Pattern pattern;
         try {
             pattern = Pattern.compile(regex);
