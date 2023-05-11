@@ -33,7 +33,7 @@ public class ServiceValidator {
 
         if(lat == null && lon == null && w3w == null) {
             log.error("validateRequestPayload - Latitude, Longitude and 3 word address are missing. Please provide either both the coordinates or the 3 word address");
-            throw new BadRequestException("Please provide either both the coordinates or the 3 word address");
+            throw new BadRequestException("Address cannot be null");
         }
         if(w3w != null) {
             if(w3w.isEmpty()) {
