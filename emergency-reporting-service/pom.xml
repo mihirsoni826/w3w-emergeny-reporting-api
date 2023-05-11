@@ -121,7 +121,7 @@
                         <exclude>**/test/**</exclude>
                         <exclude>**/model/**</exclude>
                         <exclude>**/*Advice*/**</exclude>
-                        <exclude>com/w3w/BaseApplication.java</exclude>
+                        <exclude>**/BaseApplication*/**</exclude>
                     </excludes>
                 </configuration>
                 <executions>
