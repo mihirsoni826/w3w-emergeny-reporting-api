@@ -23,12 +23,7 @@ public class EmergencyReportServiceImpl implements IEmergencyReportService {
 
     @Override
     public ThreeWordAddressSuggestions getAutoSuggestions(EmergencyReport report) {
-        List<Suggestion> suggestions;
-
-        if(report.getLatitude() != null && report.getLongitude() != null)
-            suggestions = autoSuggestWithFocus(report.getLatitude(), report.getLongitude(), report.getThreeWordAddress());
-        else
-            suggestions = autoSuggestWithoutFocus(report.getThreeWordAddress());
+        List<Suggestion> suggestions = autoSuggestWithoutFocus(report.getThreeWordAddress());
         
         List<FilteredSuggestion> filteredSuggestions = filterSuggestions(suggestions);
 
@@ -78,31 +73,6 @@ public class EmergencyReportServiceImpl implements IEmergencyReportService {
             return autosuggest.getSuggestions();
         else {
             log.error("autoSuggestWithoutFocus - w3w api call failed for 3wa {} with error = {}", threeWordAddress, autosuggest.getError().getMessage());
-            throw new W3WApiException(autosuggest.getError().getKey(), autosuggest.getError().getMessage());
-        }
-    }
-
-    /**
-     * This method is used to get suggestions for an incorrect three word address by calling the w3w <b>/autosuggest</b> api.
-     * <br>
-     * This method passes <b>country code</b> as 'GB' because the emergency services are only based in UK and <b>focus</b> as the coordinates in the payload so as to get more accurate and relevant results
-     * @param lat latitude in the EmergencyReport object
-     * @param lon longitude in the EmergencyReport object
-     * @param threeWordAddress incorrect three word address to get suggestions for
-     * @return List of suggestions as received from the w3w api
-     * @throws W3WApiException if w3w api call is not successful
-     * @see W3WApiException
-     */
-    private List<Suggestion> autoSuggestWithFocus(Double lat, Double lon, String threeWordAddress) {
-        Autosuggest autosuggest = api.autosuggest(threeWordAddress)
-                                    .clipToCountry(Constants.GREAT_BRITAIN_COUNTRY_CODE)
-                                    .focus(new Coordinates(lat, lon))
-                                    .execute();
-
-        if(autosuggest.isSuccessful())
-            return autosuggest.getSuggestions();
-        else {
-            log.error("autoSuggestWithFocus - w3w api call failed for 3wa {} with error = {}", threeWordAddress, autosuggest.getError().getMessage());
             throw new W3WApiException(autosuggest.getError().getKey(), autosuggest.getError().getMessage());
         }
     }

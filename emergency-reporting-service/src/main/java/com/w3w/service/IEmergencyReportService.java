@@ -10,7 +10,6 @@ public interface IEmergencyReportService {
      * Method to return filtered suggestions as received from the w3w api
      * @param report EmergencyReport request/response object
      * @return Filtered 3wa suggestions
-     * @see EmergencyReportServiceImpl#autoSuggestWithFocus
      * @see EmergencyReportServiceImpl#autoSuggestWithoutFocus
      * @see EmergencyReportServiceImpl#filterSuggestions
      * @see ThreeWordAddressSuggestions
