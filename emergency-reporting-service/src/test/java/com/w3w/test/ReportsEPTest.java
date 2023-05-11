@@ -20,15 +20,13 @@ public class ReportsEPTest {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final String reportsEP = "http://localhost:8081/emergencyapi/reports";
-    private final Double w3wLat = 51.520847;
-    private final Double w3wLon = -0.195521;
     private final String w3w3wa = "filled.count.soap";
 
     @Test
     public void givenCoordinates_whenCoordinatesAreValid_thenReturnAllAddresses() throws Exception {
-        EmergencyReport expectedResponse = TestUtility.createEmergencyReportObject(w3wLat, w3wLon, w3w3wa);
+        EmergencyReport expectedResponse = TestUtility.createEmergencyReportObject(TestUtility.w3wLat, TestUtility.w3wLon, w3w3wa);
 
-        EmergencyReport emergencyReport = TestUtility.createEmergencyReportObject(w3wLat, w3wLon, null);
+        EmergencyReport emergencyReport = TestUtility.createEmergencyReportObject(TestUtility.w3wLat, TestUtility.w3wLon, null);
 
         ObjectMapper objectMapper = new ObjectMapper();
         String requestPayload = objectMapper.writeValueAsString(emergencyReport);
@@ -48,7 +46,7 @@ public class ReportsEPTest {
 
     @Test
     public void given3wa_when3waIsValid_thenReturnAllAddresses() throws Exception {
-        EmergencyReport expectedResponse = TestUtility.createEmergencyReportObject(w3wLat, w3wLon, w3w3wa);
+        EmergencyReport expectedResponse = TestUtility.createEmergencyReportObject(TestUtility.w3wLat, TestUtility.w3wLon, w3w3wa);
 
         EmergencyReport emergencyReport = TestUtility.createEmergencyReportObject(null, null, w3w3wa);
 
@@ -91,7 +89,7 @@ public class ReportsEPTest {
 
     @Test
     public void givenGetRequest_whenReportsEndpoint_thenReturnMethodNotAllowedError() throws Exception {
-        EmergencyReport emergencyReport = TestUtility.createEmergencyReportObject(w3wLat, w3wLon, null);
+        EmergencyReport emergencyReport = TestUtility.createEmergencyReportObject(TestUtility.w3wLat, TestUtility.w3wLon, null);
 
         ObjectMapper objectMapper = new ObjectMapper();
         String requestPayload = objectMapper.writeValueAsString(emergencyReport);
@@ -113,7 +111,7 @@ public class ReportsEPTest {
 
     @Test
     public void givenNonNull3wa_when3waIsEmpty_thenReturnBadRequestError() throws Exception {
-        EmergencyReport emergencyReport = TestUtility.createEmergencyReportObject(w3wLat, w3wLon, "");
+        EmergencyReport emergencyReport = TestUtility.createEmergencyReportObject(TestUtility.w3wLat, TestUtility.w3wLon, "");
 
         ObjectMapper objectMapper = new ObjectMapper();
         String requestPayload = objectMapper.writeValueAsString(emergencyReport);
@@ -135,7 +133,7 @@ public class ReportsEPTest {
 
     @Test
     public void givenCoordinates_whenCoordinatesLieOutsideUK_thenReturnBadRequestError() throws Exception {
-        EmergencyReport emergencyReport = TestUtility.createEmergencyReportObject(71.520847, w3wLon, null);
+        EmergencyReport emergencyReport = TestUtility.createEmergencyReportObject(71.520847, TestUtility.w3wLon, null);
 
         ObjectMapper objectMapper = new ObjectMapper();
         String requestPayload = objectMapper.writeValueAsString(emergencyReport);
@@ -157,7 +155,7 @@ public class ReportsEPTest {
 
     @Test
     public void givenCoordinates_whenCoordinatesDontExist_thenReturnBadRequestError() throws Exception {
-        EmergencyReport emergencyReport = TestUtility.createEmergencyReportObject(711.520847, w3wLon, null);
+        EmergencyReport emergencyReport = TestUtility.createEmergencyReportObject(711.520847, TestUtility.w3wLon, null);
 
         ObjectMapper objectMapper = new ObjectMapper();
         String requestPayload = objectMapper.writeValueAsString(emergencyReport);

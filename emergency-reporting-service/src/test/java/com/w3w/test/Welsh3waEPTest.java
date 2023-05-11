@@ -23,7 +23,6 @@ public class Welsh3waEPTest {
     private final RestTemplate restTemplate = new RestTemplate();
     private final String welsh3waEP = "http://localhost:8081/emergencyapi/welsh-3wa";
     private final String ENGLISH_3wa = "filled.count.soap";
-    private final String WELSH_3wa = "ysgafn.dibyn.cefnogaeth";
 
     @Test
     public void givenWelsh3wa_whenValid_thenReturnEnglish3wa() throws Exception {
