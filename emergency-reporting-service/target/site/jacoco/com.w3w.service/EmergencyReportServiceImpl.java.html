@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EmergencyReportServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Emergency Reporting API</a> &gt; <a href="index.source.html" class="el_package">com.w3w.service</a> &gt; <span class="el_source">EmergencyReportServiceImpl.java</span></div><h1>EmergencyReportServiceImpl.java</h1><pre class="source lang-java linenums">package com.w3w.service;
+
+import com.w3w.exception.*;
+import com.w3w.model.EmergencyReport;
+import com.w3w.model.FilteredSuggestion;
+import com.w3w.model.ThreeWordAddress;
+import com.w3w.model.ThreeWordAddressSuggestions;
+import com.w3w.utils.Constants;
+import com.w3w.validation.ServiceValidator;
+import com.what3words.javawrapper.What3WordsV3;
+import com.what3words.javawrapper.request.Coordinates;
+import com.what3words.javawrapper.response.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+<span class="fc" id="L20">@Slf4j</span>
+public class EmergencyReportServiceImpl implements IEmergencyReportService {
+
+    private final What3WordsV3 api;
+
+<span class="fc" id="L25">    public EmergencyReportServiceImpl() {</span>
+<span class="fc" id="L26">        this.api = new What3WordsV3(Constants.API_KEY);</span>
+<span class="fc" id="L27">    }</span>
+
+<span class="fc" id="L29">    public EmergencyReportServiceImpl(String apiKey) {</span>
+<span class="fc" id="L30">        this.api = new What3WordsV3(apiKey);</span>
+<span class="fc" id="L31">    }</span>
+
+    @Override
+    public void getAutoSuggestions(EmergencyReport report) {
+<span class="fc" id="L35">        List&lt;Suggestion&gt; suggestions = autoSuggestWithoutFocus(report.getThreeWordAddress());</span>
+<span class="fc bfc" id="L36" title="All 2 branches covered.">        if(suggestions.isEmpty()) {</span>
+<span class="nc" id="L37">            noSuggestionsFound(report.getThreeWordAddress());</span>
+        }
+
+<span class="fc" id="L40">        List&lt;FilteredSuggestion&gt; filteredSuggestions = filterSuggestions(suggestions);</span>
+
+<span class="fc" id="L42">        ThreeWordAddressSuggestions threeWordAddressSuggestions = new ThreeWordAddressSuggestions();</span>
+<span class="fc" id="L43">        threeWordAddressSuggestions.setMessage(&quot;3wa not recognised: &quot; + report.getThreeWordAddress());</span>
+<span class="fc" id="L44">        threeWordAddressSuggestions.setSuggestions(filteredSuggestions);</span>
+
+<span class="nc" id="L46">        process3waSuggestionsResponse(threeWordAddressSuggestions, report.getThreeWordAddress());</span>
+<span class="nc" id="L47">    }</span>
+
+    /**
+     * Method takes in the suggestions as received from w3w api and filters out some field
+     * @param suggestions 3wa suggestions as received from the w3w api
+     * @return List of 3 Filtered Suggestions
+     * @see FilteredSuggestion
+     */
+    private List&lt;FilteredSuggestion&gt; filterSuggestions(List&lt;Suggestion&gt; suggestions) {
+<span class="fc" id="L56">        List&lt;FilteredSuggestion&gt; filteredSuggestions = new ArrayList&lt;&gt;();</span>
+
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        for(int i = 0; i &lt; 3; i++) {</span>
+<span class="fc" id="L59">            FilteredSuggestion tempFilteredSuggestion = new FilteredSuggestion();</span>
+<span class="fc" id="L60">            tempFilteredSuggestion.setCountry(suggestions.get(i).getCountry());</span>
+<span class="fc" id="L61">            tempFilteredSuggestion.setWords(suggestions.get(i).getWords());</span>
+<span class="fc" id="L62">            tempFilteredSuggestion.setNearestPlace(suggestions.get(i).getNearestPlace());</span>
+
+<span class="fc" id="L64">            filteredSuggestions.add(tempFilteredSuggestion);</span>
+        }
+
+<span class="fc" id="L67">        return filteredSuggestions;</span>
+    }
+
+    /**
+     * This method is used to get suggestions for an incorrect three word address by calling the w3w &lt;b&gt;/autosuggest&lt;/b&gt; api.
+     * &lt;br&gt;
+     * This method passes &lt;b&gt;country code&lt;/b&gt; as 'GB' because the emergency services are only based in UK
+     * @param threeWordAddress incorrect three word address
+     * @return List of suggestions as received from the w3w api
+     * @throws W3WApiException if w3w api call is not successful
+     * @see W3WApiException
+     */
+    private List&lt;Suggestion&gt; autoSuggestWithoutFocus(String threeWordAddress) {
+<span class="fc" id="L80">        Autosuggest autosuggest = api.autosuggest(threeWordAddress)</span>
+<span class="fc" id="L81">                                    .clipToCountry(Constants.GREAT_BRITAIN_COUNTRY_CODE)</span>
+<span class="fc" id="L82">                                    .execute();</span>
+
+<span class="fc bfc" id="L84" title="All 2 branches covered.">        if(autosuggest.isSuccessful())</span>
+<span class="fc" id="L85">            return autosuggest.getSuggestions();</span>
+        else {
+<span class="fc" id="L87">            log.error(&quot;autoSuggestWithoutFocus - w3w api call failed for 3wa {} with error = {}&quot;, threeWordAddress, autosuggest.getError().getMessage());</span>
+<span class="fc" id="L88">            throw new W3WApiException(autosuggest.getError().getKey(), autosuggest.getError().getMessage());</span>
+        }
+    }
+
+    @Override
+    public void convertAddressFormats(EmergencyReport emergencyReport) {
+<span class="fc" id="L94">        log.info(&quot;convertAddressFormats called to convert addresses into other format&quot;);</span>
+
+<span class="fc" id="L96">        Double lat = emergencyReport.getLatitude();</span>
+<span class="fc" id="L97">        Double lon = emergencyReport.getLongitude();</span>
+<span class="fc" id="L98">        String threeWordAddress = emergencyReport.getThreeWordAddress();</span>
+
+<span class="pc bpc" id="L100" title="2 of 6 branches missed.">        if((lat == null || lon == null) &amp;&amp; threeWordAddress != null) {</span>
+<span class="fc" id="L101">            com.what3words.javawrapper.response.Coordinates coordinates = convert3waToCoords(emergencyReport);</span>
+
+<span class="fc" id="L103">            ServiceValidator validator = new ServiceValidator(new EmergencyReportServiceImpl());</span>
+<span class="fc" id="L104">            validator.isUKLatAndLong(coordinates.getLat(), coordinates.getLng());</span>
+
+<span class="fc" id="L106">            emergencyReport.setLatitude(coordinates.getLat());</span>
+<span class="fc" id="L107">            emergencyReport.setLongitude(coordinates.getLng());</span>
+
+<span class="fc" id="L109">        }</span>
+<span class="pc bpc" id="L110" title="3 of 6 branches missed.">        else if(lat != null &amp;&amp; lon != null &amp;&amp; threeWordAddress == null) {</span>
+<span class="fc" id="L111">            emergencyReport.setThreeWordAddress(convertCoordsTo3wa(lat, lon, Constants.ENGLISH_LANGUAGE_CODE));</span>
+        }
+
+<span class="fc" id="L114">        log.info(&quot;convertAddressFormats - Addresses converted successfully&quot;);</span>
+<span class="fc" id="L115">    }</span>
+
+    /**
+     * Method to convert coordinates to a valid three word address using the w3w &lt;b&gt;/convert-to-3wa&lt;/b&gt; api
+     * @param lat Latitude of the address
+     * @param lon Longitude of the address
+     * @param lang Language in which we want the three word address from the w3w api
+     * @return Three word address in the language provided as argument
+     * @throws W3WApiException If w3w api fails to convert coordinates to a valid three word address
+     * @see W3WApiException
+     */
+    private String convertCoordsTo3wa(Double lat, Double lon, String lang) {
+<span class="fc" id="L127">        log.info(&quot;Converting coordinates ({},{}) to three word address&quot;, lat, lon);</span>
+
+<span class="fc" id="L129">        ConvertTo3WA words = api.convertTo3wa(new Coordinates(lat, lon))</span>
+<span class="fc" id="L130">                                .language(lang)</span>
+<span class="fc" id="L131">                                .execute();</span>
+
+<span class="fc bfc" id="L133" title="All 2 branches covered.">        if(words.isSuccessful())</span>
+<span class="fc" id="L134">            return words.getWords();</span>
+        else {
+<span class="fc" id="L136">            log.error(&quot;convertCoordsTo3wa - w3w api failed to convert ({},{}) to 3wa with error = {}&quot;, lat, lon, words.getError().getMessage());</span>
+<span class="fc" id="L137">            throw new W3WApiException(words.getError().getKey(), words.getError().getMessage());</span>
+        }
+    }
+
+    /**
+     * Method to convert a three word address to a set of valid coordinates using the w3w &lt;b&gt;/convert-to-coordinates&lt;/b&gt; api
+     * &lt;br&gt;
+     * The three word address passed to w3w api could still be invalid after the validation check - ///filled.count.soap and ///filled.count.so
+     * both look like valid three word addresses as per the regex check. Even though these &lt;i&gt;&lt;b&gt;look like&lt;/b&gt;&lt;/i&gt; valid addresses, they are not valid.
+     * &lt;br&gt;
+     * To handle this edge-case, we check the error code from w3w api response, if error code is 'BadWords', we call the w3w &lt;b&gt;/autosuggest&lt;/b&gt; api to get
+     * valid suggestions for the incorrect three word address provided.
+     * @param emergencyReport EmergencyReport request/response object
+     * @return Coordinates of the three word address
+     * @throws W3WApiException If w3w api fails to convert coordinates to a valid three word address
+     * @see com.w3w.validation.ServiceValidator#is3waValidRegex
+     * @see #getAutoSuggestions
+     * @see #process3waSuggestionsResponse
+     */
+    private com.what3words.javawrapper.response.Coordinates convert3waToCoords(EmergencyReport emergencyReport) {
+<span class="fc" id="L157">        String threeWordAddress = emergencyReport.getThreeWordAddress();</span>
+<span class="fc" id="L158">        log.info(&quot;Converting three word address {} to coordinates&quot;, threeWordAddress);</span>
+
+<span class="fc" id="L160">        ConvertToCoordinates coordinates = api.convertToCoordinates(threeWordAddress)</span>
+<span class="fc" id="L161">                                                .execute();</span>
+
+<span class="fc bfc" id="L163" title="All 2 branches covered.">        if(coordinates.isSuccessful())</span>
+<span class="fc" id="L164">            return coordinates.getCoordinates();</span>
+        else {
+<span class="fc bfc" id="L166" title="All 2 branches covered.">            if(coordinates.getError().getKey().equals(Constants.BAD_WORDS_ERROR_CODE)) {</span>
+<span class="nc" id="L167">                getAutoSuggestions(emergencyReport);</span>
+            }
+<span class="fc" id="L169">            log.error(&quot;convert3waToCoords - w3w api failed to convert {} to coordinates with error = {}&quot;, threeWordAddress, coordinates.getError().getMessage());</span>
+<span class="fc" id="L170">            throw new W3WApiException(coordinates.getError().getKey(), coordinates.getError().getMessage());</span>
+        }
+    }
+
+    @Override
+    public void process3waSuggestionsResponse(ThreeWordAddressSuggestions threeWordAddressSuggestions, String threeWordAddress) {
+<span class="fc" id="L176">        log.error(&quot;validateThreeWordAddress - provided 3wa {} is not recognized, providing suggestions to user = {}&quot;,</span>
+<span class="fc" id="L177">                threeWordAddress, threeWordAddressSuggestions.getSuggestions());</span>
+
+<span class="fc" id="L179">        throw new AutoSuggestException(threeWordAddressSuggestions.getMessage(), threeWordAddressSuggestions.getSuggestions());</span>
+    }
+
+    /**
+     * This method logs and throws an error when the 3wa supplied did not get any suggestions from the w3w api
+     * @param threeWordAddress three word address as received in the request payload
+     * @throws BadRequestException because the 3wa is invalid format
+     */
+    private void noSuggestionsFound(String threeWordAddress) {
+<span class="fc" id="L188">        log.error(&quot;noSuggestionsFound - w3w api did not return any suggestions for {}&quot;, threeWordAddress);</span>
+<span class="fc" id="L189">        throw new BadRequestException(&quot;3wa address supplied has invalid format&quot;);</span>
+    }
+
+    @Override
+    public void createEmergencyReportPOJOFrom3wa(EmergencyReport emergencyReport, ThreeWordAddress payload) {
+<span class="fc" id="L194">        com.what3words.javawrapper.response.Coordinates coordinates = convert3waToCoords(emergencyReport);</span>
+<span class="fc" id="L195">        emergencyReport.setLatitude(coordinates.getLat());</span>
+<span class="fc" id="L196">        emergencyReport.setLongitude(coordinates.getLng());</span>
+<span class="fc" id="L197">    }</span>
+
+    @Override
+    public String convertEnglishToWelsh(EmergencyReport emergencyReport) {
+<span class="fc" id="L201">        return convertCoordsTo3wa(emergencyReport.getLatitude(), emergencyReport.getLongitude(), Constants.WELSH_LANGUAGE_CODE);</span>
+    }
+
+    @Override
+    public String convertWelshToEnglish(EmergencyReport emergencyReport) {
+<span class="fc" id="L206">        return convertCoordsTo3wa(emergencyReport.getLatitude(), emergencyReport.getLongitude(), Constants.ENGLISH_LANGUAGE_CODE);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

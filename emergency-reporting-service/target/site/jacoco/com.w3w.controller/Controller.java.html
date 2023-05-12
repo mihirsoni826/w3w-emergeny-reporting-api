@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Controller.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Emergency Reporting API</a> &gt; <a href="index.source.html" class="el_package">com.w3w.controller</a> &gt; <span class="el_source">Controller.java</span></div><h1>Controller.java</h1><pre class="source lang-java linenums">package com.w3w.controller;
+
+import com.w3w.model.EmergencyReport;
+import com.w3w.model.ThreeWordAddress;
+import com.w3w.service.IEmergencyReportService;
+import com.w3w.utils.Constants;
+import com.w3w.validation.ServiceValidator;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+<span class="fc" id="L18">@Slf4j</span>
+@RequestMapping(&quot;/emergencyapi&quot;)
+public class Controller {
+
+    private final ServiceValidator validator;
+
+    private final IEmergencyReportService service;
+
+    @Autowired
+<span class="fc" id="L27">    public Controller(ServiceValidator validator, IEmergencyReportService service) {</span>
+<span class="fc" id="L28">        this.validator = validator;</span>
+<span class="fc" id="L29">        this.service = service;</span>
+<span class="fc" id="L30">    }</span>
+
+    @PostMapping(value = &quot;/reports&quot;, produces = Constants.APPLICATION_JSON, consumes = Constants.APPLICATION_JSON)
+    public ResponseEntity&lt;EmergencyReport&gt; convertAddressFormat(@RequestBody EmergencyReport payload) {
+<span class="fc" id="L34">        log.info(&quot;Controller - received request at /reports for payload = {}&quot;, payload);</span>
+
+<span class="fc" id="L36">        validator.validateRequestPayload(payload);</span>
+
+<span class="fc" id="L38">        service.convertAddressFormats(payload);</span>
+
+<span class="fc" id="L40">        log.info(&quot;Controller - convertAddressFormat ended successfully!&quot;);</span>
+<span class="fc" id="L41">        return new ResponseEntity&lt;&gt;(payload, HttpStatus.OK);</span>
+    }
+
+    @PostMapping(value = &quot;/welsh-convert&quot;, produces = Constants.APPLICATION_JSON, consumes = Constants.APPLICATION_JSON)
+    public ResponseEntity&lt;ThreeWordAddress&gt; handleWelshConvert(@RequestBody ThreeWordAddress payload) {
+<span class="fc" id="L46">        log.info(&quot;Controller - received request at /welsh-convert for payload = {}&quot;, payload);</span>
+
+<span class="fc" id="L48">        EmergencyReport emergencyReport = new EmergencyReport();</span>
+<span class="fc" id="L49">        emergencyReport.setThreeWordAddress(payload.getThreeWordAddress());</span>
+
+<span class="fc" id="L51">        validator.validateRequestPayload(emergencyReport);</span>
+<span class="fc" id="L52">        service.createEmergencyReportPOJOFrom3wa(emergencyReport, payload);</span>
+<span class="fc" id="L53">        validator.isUKLatAndLong(emergencyReport.getLatitude(), emergencyReport.getLongitude());</span>
+
+<span class="fc" id="L55">        String welsh3wa = service.convertEnglishToWelsh(emergencyReport);</span>
+<span class="fc" id="L56">        log.info(&quot;English Three word address converted to Welsh successfully!&quot;);</span>
+
+<span class="fc" id="L58">        payload.setThreeWordAddress(welsh3wa);</span>
+
+<span class="fc" id="L60">        log.info(&quot;Controller - /welsh-convert completed successfully!&quot;);</span>
+<span class="fc" id="L61">        return new ResponseEntity&lt;&gt;(payload, HttpStatus.OK);</span>
+    }
+
+    @PostMapping(value = &quot;/welsh-3wa&quot;, produces = Constants.APPLICATION_JSON, consumes = Constants.APPLICATION_JSON)
+    public ResponseEntity&lt;ThreeWordAddress&gt; handleEnglishConvert(@RequestBody ThreeWordAddress payload) {
+<span class="fc" id="L66">        log.info(&quot;Controller - received request at /welsh-3wa for payload = {}&quot;, payload);</span>
+
+<span class="fc" id="L68">        EmergencyReport emergencyReport = new EmergencyReport();</span>
+<span class="fc" id="L69">        emergencyReport.setThreeWordAddress(payload.getThreeWordAddress());</span>
+
+<span class="fc" id="L71">        validator.validateRequestPayload(emergencyReport);</span>
+<span class="fc" id="L72">        service.createEmergencyReportPOJOFrom3wa(emergencyReport, payload);</span>
+<span class="fc" id="L73">        validator.isUKLatAndLong(emergencyReport.getLatitude(), emergencyReport.getLongitude());</span>
+
+<span class="fc" id="L75">        String english3wa = service.convertWelshToEnglish(emergencyReport);</span>
+<span class="fc" id="L76">        log.info(&quot;Welsh Three word address converted to English successfully!&quot;);</span>
+
+<span class="fc" id="L78">        payload.setThreeWordAddress(english3wa);</span>
+
+<span class="fc" id="L80">        return new ResponseEntity&lt;&gt;(payload, HttpStatus.OK);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

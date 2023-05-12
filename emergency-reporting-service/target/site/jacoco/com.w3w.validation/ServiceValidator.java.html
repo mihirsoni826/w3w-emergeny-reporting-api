@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServiceValidator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Emergency Reporting API</a> &gt; <a href="index.source.html" class="el_package">com.w3w.validation</a> &gt; <span class="el_source">ServiceValidator.java</span></div><h1>ServiceValidator.java</h1><pre class="source lang-java linenums">package com.w3w.validation;
+
+import com.w3w.exception.BadRequestException;
+import com.w3w.model.EmergencyReport;
+import com.w3w.model.ThreeWordAddressSuggestions;
+import com.w3w.service.IEmergencyReportService;
+import com.w3w.utils.Constants;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
+<span class="fc" id="L16">@Slf4j</span>
+@Component
+public class ServiceValidator {
+
+    private final IEmergencyReportService service;
+
+    @Autowired
+<span class="fc" id="L23">    public ServiceValidator(IEmergencyReportService service) {</span>
+<span class="fc" id="L24">        this.service = service;</span>
+<span class="fc" id="L25">    }</span>
+
+    /**
+     * Method to validate the request payload received
+     * @param report The request payload received as-is
+     * @throws BadRequestException if any of the fields in the request payload are invalid
+     */
+    public void validateRequestPayload(EmergencyReport report) {
+<span class="fc" id="L33">        Double lat = report.getLatitude();</span>
+<span class="fc" id="L34">        Double lon = report.getLongitude();</span>
+<span class="fc" id="L35">        String w3w = report.getThreeWordAddress();</span>
+
+<span class="pc bpc" id="L37" title="1 of 6 branches missed.">        if(lat == null &amp;&amp; lon == null &amp;&amp; w3w == null) {</span>
+<span class="fc" id="L38">            log.error(&quot;validateRequestPayload - Latitude, Longitude and 3 word address are missing. Please provide either both the coordinates or the 3 word address&quot;);</span>
+<span class="fc" id="L39">            throw new BadRequestException(&quot;Address cannot be null&quot;);</span>
+        }
+<span class="fc bfc" id="L41" title="All 2 branches covered.">        if(w3w != null) {</span>
+<span class="fc bfc" id="L42" title="All 2 branches covered.">            if(w3w.isEmpty()) {</span>
+<span class="fc" id="L43">                log.error(&quot;validateRequestPayload - words or 'null' should be provided&quot;);</span>
+<span class="fc" id="L44">                throw new BadRequestException(&quot;words or 'null' should be provided&quot;);</span>
+            }
+<span class="fc" id="L46">            validateThreeWordAddress(report);</span>
+<span class="fc" id="L47">            log.info(&quot;3wa validated successfully!&quot;);</span>
+        }
+<span class="pc bpc" id="L49" title="1 of 4 branches missed.">        if(lat != null &amp;&amp; lon != null) {</span>
+<span class="fc" id="L50">            isUKLatAndLong(lat, lon);</span>
+<span class="fc" id="L51">            log.info(&quot;Latitude and Longitude validated successfully!&quot;);</span>
+        }
+<span class="fc" id="L53">    }</span>
+
+    /**
+     * Method to validate the three word address (3wa) provided in the request payload.
+     * If the 3wa does not look like a valid one, it calls getAutoSuggestions() to get suggestions based off of the provided 3wa
+     * @param report The request payload received as-is
+     * @see IEmergencyReportService#getAutoSuggestions
+     * @see IEmergencyReportService#process3waSuggestionsResponse 
+     */
+    private void validateThreeWordAddress(EmergencyReport report) {
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        if(is3waValidRegex(report.getThreeWordAddress(), Constants.VALID_3WA_REGEX)) {</span>
+<span class="fc" id="L64">            log.info(&quot;validateThreeWordAddress - {} is a valid three word address&quot;, report.getThreeWordAddress());</span>
+        }
+        else {
+            // try to find autosuggestions if 3wa does not look like a valid 3wa
+<span class="nc" id="L68">            service.getAutoSuggestions(report);</span>
+        }
+<span class="fc" id="L70">    }</span>
+
+    /**
+     * Method to validate if the three word address looks like a valid three word address
+     * @param threeWordAddress The three word address provided in the request payload
+     * @return true/false based on whether the three word address looks valid
+     */
+    public boolean is3waValidRegex(String threeWordAddress, String regex) {
+        Pattern pattern;
+        try {
+<span class="fc" id="L80">            pattern = Pattern.compile(regex);</span>
+        }
+<span class="fc" id="L82">        catch(PatternSyntaxException e) {</span>
+<span class="fc" id="L83">            log.error(&quot;is3waValidRegex - Error compiling the regex&quot;);</span>
+<span class="fc" id="L84">            throw new RuntimeException(&quot;Error compiling the regex&quot;);</span>
+<span class="fc" id="L85">        }</span>
+<span class="fc" id="L86">        Matcher matcher = pattern.matcher(threeWordAddress);</span>
+
+<span class="fc" id="L88">        return matcher.find();</span>
+    }
+
+    /**
+     * Method to check if the coordinates provided lie within UK
+     * @param lat latitude as provided in the request payload
+     * @param lon longitude as provided in the request payload
+     * @throws BadRequestException if the coordinates are invalid or if they lie outside UK
+     */
+    public void isUKLatAndLong(Double lat, Double lon) {
+<span class="fc bfc" id="L98" title="All 2 branches covered.">        if(coordinatesInValidRange(lat, lon)) {</span>
+<span class="pc bpc" id="L99" title="2 of 8 branches missed.">            if (lat &lt; 49.8 || lat &gt; 58.7 || lon &lt; -8.6 || lon &gt; 1.8) {</span>
+<span class="fc" id="L100">                log.error(&quot;isUKLatAndLong - Address is outside UK&quot;);</span>
+<span class="fc" id="L101">                throw new BadRequestException(&quot;Address is outside UK. Please provide a UK address&quot;);</span>
+            }
+            else {
+<span class="fc" id="L104">                log.info(&quot;isUKLatAndLong - Coordinates are inside UK&quot;);</span>
+            }
+        }
+        else {
+<span class="fc" id="L108">            log.error(&quot;isUKLatAndLong - provided coordinates ({},{}) are invalid&quot;, lat, lon);</span>
+<span class="fc" id="L109">            throw new BadRequestException(&quot;Coordinates are invalid. Please provide valid latitude and longitude - latitudes (-90 to 90) and longitudes (-180 to 180)&quot;);</span>
+        }
+<span class="fc" id="L111">    }</span>
+
+    /**
+     * Method to check if the coordinates are valid - latitudes (-90 to 90) and longitudes (-180 to 180)
+     * @param lat latitude as provided in the request payload
+     * @param lon longitude as provided in the request payload
+     * @return true/false is coordinates are valid/invalid respectively
+     */
+    public boolean coordinatesInValidRange(Double lat, Double lon) {
+<span class="fc bfc" id="L120" title="All 8 branches covered.">        return ((lat &gt;= -90 &amp;&amp; lat &lt;= 90) &amp;&amp; (lon &gt;= -180 &amp;&amp; lon &lt;= 180));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>
