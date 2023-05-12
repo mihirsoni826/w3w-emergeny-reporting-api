@@ -14,7 +14,7 @@ public interface IEmergencyReportService {
      * @see EmergencyReportServiceImpl#filterSuggestions
      * @see ThreeWordAddressSuggestions
      */
-    ThreeWordAddressSuggestions getAutoSuggestions(EmergencyReport report);
+    void getAutoSuggestions(EmergencyReport report);
 
     /**
      * This method is used to convert coordinates to a valid three word address and vice-versa

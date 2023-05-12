@@ -31,32 +31,35 @@ public class EmergencyReportServiceImpl implements IEmergencyReportService {
     }
 
     @Override
-    public ThreeWordAddressSuggestions getAutoSuggestions(EmergencyReport report) {
+    public void getAutoSuggestions(EmergencyReport report) {
         List<Suggestion> suggestions = autoSuggestWithoutFocus(report.getThreeWordAddress());
-        
+        if(suggestions.isEmpty()) {
+            noSuggestionsFound(report.getThreeWordAddress());
+        }
+
         List<FilteredSuggestion> filteredSuggestions = filterSuggestions(suggestions);
 
         ThreeWordAddressSuggestions threeWordAddressSuggestions = new ThreeWordAddressSuggestions();
         threeWordAddressSuggestions.setMessage("3wa not recognised: " + report.getThreeWordAddress());
         threeWordAddressSuggestions.setSuggestions(filteredSuggestions);
 
-        return threeWordAddressSuggestions;
+        process3waSuggestionsResponse(threeWordAddressSuggestions, report.getThreeWordAddress());
     }
 
     /**
-     * Method takes in the suggestions as received from w3w api and filters out some fields
+     * Method takes in the suggestions as received from w3w api and filters out some field
      * @param suggestions 3wa suggestions as received from the w3w api
-     * @return List of Filtered Suggestions
+     * @return List of 3 Filtered Suggestions
      * @see FilteredSuggestion
      */
     private List<FilteredSuggestion> filterSuggestions(List<Suggestion> suggestions) {
         List<FilteredSuggestion> filteredSuggestions = new ArrayList<>();
 
-        for(Suggestion suggestion : suggestions) {
+        for(int i = 0; i < 3; i++) {
             FilteredSuggestion tempFilteredSuggestion = new FilteredSuggestion();
-            tempFilteredSuggestion.setCountry(suggestion.getCountry());
-            tempFilteredSuggestion.setWords(suggestion.getWords());
-            tempFilteredSuggestion.setNearestPlace(suggestion.getNearestPlace());
+            tempFilteredSuggestion.setCountry(suggestions.get(i).getCountry());
+            tempFilteredSuggestion.setWords(suggestions.get(i).getWords());
+            tempFilteredSuggestion.setNearestPlace(suggestions.get(i).getNearestPlace());
 
             filteredSuggestions.add(tempFilteredSuggestion);
         }
@@ -161,8 +164,7 @@ public class EmergencyReportServiceImpl implements IEmergencyReportService {
             return coordinates.getCoordinates();
         else {
             if(coordinates.getError().getKey().equals(Constants.BAD_WORDS_ERROR_CODE)) {
-                ThreeWordAddressSuggestions threeWordAddressSuggestions = getAutoSuggestions(emergencyReport);
-                process3waSuggestionsResponse(threeWordAddressSuggestions, threeWordAddress);
+                getAutoSuggestions(emergencyReport);
             }
             log.error("convert3waToCoords - w3w api failed to convert {} to coordinates with error = {}", threeWordAddress, coordinates.getError().getMessage());
             throw new W3WApiException(coordinates.getError().getKey(), coordinates.getError().getMessage());
@@ -171,16 +173,20 @@ public class EmergencyReportServiceImpl implements IEmergencyReportService {
 
     @Override
     public void process3waSuggestionsResponse(ThreeWordAddressSuggestions threeWordAddressSuggestions, String threeWordAddress) {
-        if(threeWordAddressSuggestions.getSuggestions() != null && !threeWordAddressSuggestions.getSuggestions().isEmpty()) {
-            log.error("validateThreeWordAddress - provided 3wa {} is not recognized, providing suggestions to user = {}",
-                    threeWordAddress, threeWordAddressSuggestions.getSuggestions());
+        log.error("validateThreeWordAddress - provided 3wa {} is not recognized, providing suggestions to user = {}",
+                threeWordAddress, threeWordAddressSuggestions.getSuggestions());
 
-            throw new AutoSuggestException(threeWordAddressSuggestions.getMessage(), threeWordAddressSuggestions.getSuggestions());
-        }
-        else {
-            log.error("validateThreeWordAddress - w3w api did not return any suggestions for {}", threeWordAddress);
-            throw new BadRequestException("3wa address supplied has invalid format");
-        }
+        throw new AutoSuggestException(threeWordAddressSuggestions.getMessage(), threeWordAddressSuggestions.getSuggestions());
+    }
+
+    /**
+     * This method logs and throws an error when the 3wa supplied did not get any suggestions from the w3w api
+     * @param threeWordAddress three word address as received in the request payload
+     * @throws BadRequestException because the 3wa is invalid format
+     */
+    private void noSuggestionsFound(String threeWordAddress) {
+        log.error("noSuggestionsFound - w3w api did not return any suggestions for {}", threeWordAddress);
+        throw new BadRequestException("3wa address supplied has invalid format");
     }
 
     @Override

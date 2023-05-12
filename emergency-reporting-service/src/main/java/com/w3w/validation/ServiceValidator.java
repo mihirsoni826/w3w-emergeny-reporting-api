@@ -65,8 +65,7 @@ public class ServiceValidator {
         }
         else {
             // try to find autosuggestions if 3wa does not look like a valid 3wa
-            ThreeWordAddressSuggestions threeWordAddressSuggestions = service.getAutoSuggestions(report);
-            service.process3waSuggestionsResponse(threeWordAddressSuggestions, report.getThreeWordAddress());
+            service.getAutoSuggestions(report);
         }
     }
 
