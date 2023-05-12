@@ -11,18 +11,18 @@ Screenshot:
 <b><mark>Context Path:</mark></b> /emergencyapi
 
 * [/reports](#1-emergencyapireports)
-  * [Valid request/response](#reports---valid-requestresponse-)
-  * [Erroneous request/response](#erroneous-requestresponse-)
+  * [Valid request/response](#reports---valid-requestresponse)
+  * [Erroneous request/response](#reports---erroneous-requestresponse)
 * [/welsh-convert](#2-emergencyapiwelsh-convert)
-  * [Valid request/response](#welsh-convert---valid-requestresponse-)
-  * [Erroneous request/response](#welsh-convert---erroneous-requestresponse-)
+  * [Valid request/response](#welsh-convert---valid-requestresponse)
+  * [Erroneous request/response](#welsh-convert---erroneous-requestresponse)
 * [/welsh-3wa](#3-post-welsh-3wa)
   * [Valid request/response](#welsh-3wa---valid-requestresponse)
   * [Erroneous request/response](#welsh-3wa---erroneous-requestresponse)
 
 ### 1. POST /reports
 Used to convert a valid set of coordinates to a valid three word address and vice-versa.
-#### /reports - Valid Request/Response:
+#### /reports - Valid Request/Response
 ```
 Request:
 {
@@ -52,7 +52,7 @@ Response:
 }
 ```
 
-#### /reports - Erroneous request/response:
+#### /reports - Erroneous request/response
 Non-null empty three word address
 ```
 Request:
@@ -178,7 +178,7 @@ Response:
 ### 2. POST /welsh-convert
 Used to translate a valid English three word address to Welsh.
 
-#### /welsh-convert - Valid request/response:
+#### /welsh-convert - Valid request/response
 ```
 Request:
 {
@@ -191,7 +191,7 @@ Response:
 }
 ```
 
-#### /welsh-convert - Erroneous request/response:
+#### /welsh-convert - Erroneous request/response
 Valid but incorrect/incomplete English three word address
 ```
 Request:
