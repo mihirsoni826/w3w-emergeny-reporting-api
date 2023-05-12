@@ -8,7 +8,7 @@ Screenshot:
 
 ## Sample request/response payloads:
 
-<mark style="background-color: yellow">Context Path:</mark> /emergencyapi
+<b><mark>Context Path:</mark></b> /emergencyapi
 
 * [/reports](#1-emergencyapireports)
   * [Valid request/response](#reports---valid-requestresponse-)
@@ -16,6 +16,9 @@ Screenshot:
 * [/welsh-convert](#2-emergencyapiwelsh-convert)
   * [Valid request/response](#welsh-convert---valid-requestresponse-)
   * [Erroneous request/response](#welsh-convert---erroneous-requestresponse-)
+* [/welsh-3wa](#3-post-welsh-3wa)
+  * [Valid request/response](#welsh-3wa---valid-requestresponse)
+  * [Erroneous request/response](#welsh-3wa---erroneous-requestresponse)
 
 ### 1. POST /reports
 Used to convert a valid set of coordinates to a valid three word address and vice-versa.
