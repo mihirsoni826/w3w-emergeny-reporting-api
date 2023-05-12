@@ -2,8 +2,6 @@ package com.w3w.test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.w3w.model.EmergencyReport;
-import com.w3w.model.ErrorMessage;
-import com.w3w.model.ThreeWordAddressSuggestions;
 import com.w3w.test.utils.TestUtility;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,7 +11,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 public class ReportsEPTest {
@@ -78,13 +78,10 @@ public class ReportsEPTest {
 
         HttpEntity<String> entity = new HttpEntity<>(requestPayload, headers);
 
-        assertThrows(HttpClientErrorException.class, () -> {
-            ResponseEntity<String> responseEntity = restTemplate.exchange(reportsEP, HttpMethod.POST, entity, String.class);
+        Exception exception = assertThrows(HttpClientErrorException.class, () -> restTemplate.exchange(reportsEP, HttpMethod.POST, entity, String.class));
 
-            ErrorMessage errorMessage = objectMapper.readValue(responseEntity.getBody(), ErrorMessage.class);
-            assertEquals(400, responseEntity.getStatusCode().value());
-            assertEquals("Address cannot be null", errorMessage.getErrorMessage());
-        });
+        assertTrue(exception.getMessage().contains("Address cannot be null"));
+        assertTrue(exception.getMessage().contains("400"));
     }
 
     @Test
@@ -100,13 +97,10 @@ public class ReportsEPTest {
 
         HttpEntity<String> entity = new HttpEntity<>(requestPayload, headers);
 
-        assertThrows(HttpClientErrorException.class, () -> {
-            ResponseEntity<String> responseEntity = restTemplate.exchange(reportsEP, HttpMethod.GET, entity, String.class);
+        Exception exception = assertThrows(HttpClientErrorException.class, () -> restTemplate.exchange(reportsEP, HttpMethod.GET, entity, String.class));
 
-            ErrorMessage errorMessage = objectMapper.readValue(responseEntity.getBody(), ErrorMessage.class);
-            assertEquals(400, responseEntity.getStatusCode().value());
-            assertEquals("Request method 'GET' is not supported", errorMessage.getErrorMessage());
-        });
+        assertTrue(exception.getMessage().contains("Request method 'GET' is not supported"));
+        assertTrue(exception.getMessage().contains("405"));
     }
 
     @Test
@@ -122,13 +116,10 @@ public class ReportsEPTest {
 
         HttpEntity<String> entity = new HttpEntity<>(requestPayload, headers);
 
-        assertThrows(HttpClientErrorException.class, () -> {
-            ResponseEntity<String> responseEntity = restTemplate.exchange(reportsEP, HttpMethod.POST, entity, String.class);
+        Exception exception = assertThrows(HttpClientErrorException.class, () -> restTemplate.exchange(reportsEP, HttpMethod.POST, entity, String.class));
 
-            ErrorMessage errorMessage = objectMapper.readValue(responseEntity.getBody(), ErrorMessage.class);
-            assertEquals(400, responseEntity.getStatusCode().value());
-            assertEquals("words or 'null' should be provided", errorMessage.getErrorMessage());
-        });
+        assertTrue(exception.getMessage().contains("words or 'null' should be provided"));
+        assertTrue(exception.getMessage().contains("400"));
     }
 
     @Test
@@ -144,13 +135,29 @@ public class ReportsEPTest {
 
         HttpEntity<String> entity = new HttpEntity<>(requestPayload, headers);
 
-        assertThrows(HttpClientErrorException.class, () -> {
-            ResponseEntity<String> responseEntity = restTemplate.exchange(reportsEP, HttpMethod.POST, entity, String.class);
+        Exception exception = assertThrows(HttpClientErrorException.class, () -> restTemplate.exchange(reportsEP, HttpMethod.POST, entity, String.class));
 
-            ErrorMessage errorMessage = objectMapper.readValue(responseEntity.getBody(), ErrorMessage.class);
-            assertEquals(400, responseEntity.getStatusCode().value());
-            assertEquals("Coordinates are outside UK. Please provide UK coordinates", errorMessage.getErrorMessage());
-        });
+        assertTrue(exception.getMessage().contains("Address is outside UK. Please provide a UK address"));
+        assertTrue(exception.getMessage().contains("400"));
+    }
+
+    @Test
+    public void givenValid3wa_when3waOutsideUK_thenReturnBadRequestError() throws Exception {
+        EmergencyReport emergencyReport = TestUtility.createEmergencyReportObject(null, null, "toddler.geologist.animated");
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String requestPayload = objectMapper.writeValueAsString(emergencyReport);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+
+        HttpEntity<String> entity = new HttpEntity<>(requestPayload, headers);
+
+        Exception exception = assertThrows(HttpClientErrorException.class, () -> restTemplate.exchange(reportsEP, HttpMethod.POST, entity, String.class));
+
+        assertTrue(exception.getMessage().contains("Address is outside UK. Please provide a UK address"));
+        assertTrue(exception.getMessage().contains("400"));
     }
 
     @Test
@@ -166,13 +173,10 @@ public class ReportsEPTest {
 
         HttpEntity<String> entity = new HttpEntity<>(requestPayload, headers);
 
-        assertThrows(HttpClientErrorException.class, () -> {
-            ResponseEntity<String> responseEntity = restTemplate.exchange(reportsEP, HttpMethod.POST, entity, String.class);
+        Exception exception = assertThrows(HttpClientErrorException.class, () -> restTemplate.exchange(reportsEP, HttpMethod.POST, entity, String.class));
 
-            ErrorMessage errorMessage = objectMapper.readValue(responseEntity.getBody(), ErrorMessage.class);
-            assertEquals(400, responseEntity.getStatusCode().value());
-            assertEquals("Coordinates are invalid. Please provide valid latitude and longitude - latitudes (-90 to 90) and longitudes (-180 to 180)", errorMessage.getErrorMessage());
-        });
+        assertTrue(exception.getMessage().contains("Coordinates are invalid. Please provide valid latitude and longitude - latitudes (-90 to 90) and longitudes (-180 to 180)"));
+        assertTrue(exception.getMessage().contains("400"));
     }
 
     @Test
@@ -188,15 +192,11 @@ public class ReportsEPTest {
 
         HttpEntity<String> entity = new HttpEntity<>(requestPayload, headers);
 
-        assertThrows(HttpClientErrorException.class, () -> {
-            ResponseEntity<String> responseEntity = restTemplate.exchange(reportsEP, HttpMethod.POST, entity, String.class);
+        Exception exception = assertThrows(HttpClientErrorException.class, () -> restTemplate.exchange(reportsEP, HttpMethod.POST, entity, String.class));
 
-            ThreeWordAddressSuggestions actualResponse = objectMapper.readValue(responseEntity.getBody(), ThreeWordAddressSuggestions.class);
-
-            assertEquals(400, responseEntity.getStatusCode().value());
-            assertEquals("3wa address not recognised: filled.count.so", actualResponse.getMessage());
-            assertEquals(3, actualResponse.getSuggestions().size());
-        });
+        assertTrue(exception.getMessage().contains("3wa not recognised: filled.count.so"));
+        assertTrue(exception.getMessage().contains("400"));
+        assertEquals(3, exception.getMessage().split("country", -1).length - 1);
     }
 
     @Test
@@ -212,14 +212,10 @@ public class ReportsEPTest {
 
         HttpEntity<String> entity = new HttpEntity<>(requestPayload, headers);
 
-        assertThrows(HttpClientErrorException.class, () -> {
-            ResponseEntity<String> responseEntity = restTemplate.exchange(reportsEP, HttpMethod.POST, entity, String.class);
+        Exception exception = assertThrows(HttpClientErrorException.class, () -> restTemplate.exchange(reportsEP, HttpMethod.POST, entity, String.class));
 
-            ErrorMessage actualResponse = objectMapper.readValue(responseEntity.getBody(), ErrorMessage.class);
-
-            assertEquals(400, responseEntity.getStatusCode().value());
-            assertEquals("3wa address supplied has invalid format", actualResponse.getErrorMessage());
-        });
+        assertTrue(exception.getMessage().contains("3wa address supplied has invalid format"));
+        assertTrue(exception.getMessage().contains("400"));
     }
 
     @Test
@@ -235,14 +231,10 @@ public class ReportsEPTest {
 
         HttpEntity<String> entity = new HttpEntity<>(requestPayload, headers);
 
-        assertThrows(HttpClientErrorException.class, () -> {
-            ResponseEntity<String> responseEntity = restTemplate.exchange(reportsEP, HttpMethod.POST, entity, String.class);
+        Exception exception = assertThrows(HttpClientErrorException.class, () -> restTemplate.exchange(reportsEP, HttpMethod.POST, entity, String.class));
 
-            ErrorMessage actualResponse = objectMapper.readValue(responseEntity.getBody(), ErrorMessage.class);
-
-            assertEquals(400, responseEntity.getStatusCode().value());
-            assertEquals("3wa address supplied has invalid format", actualResponse.getErrorMessage());
-        });
+        assertTrue(exception.getMessage().contains("3wa address supplied has invalid format"));
+        assertTrue(exception.getMessage().contains("400"));
     }
 
 }

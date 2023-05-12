@@ -1,10 +1,7 @@
 package com.w3w.test;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.w3w.model.ErrorMessage;
 import com.w3w.model.ThreeWordAddress;
-import com.w3w.model.ThreeWordAddressSuggestions;
 import com.w3w.test.utils.TestUtility;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 public class Welsh3waEPTest {
@@ -73,15 +71,11 @@ public class Welsh3waEPTest {
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
 
         HttpEntity<String> entity = new HttpEntity<>(requestPayload, headers);
-        assertThrows(HttpClientErrorException.class, () -> {
-            ResponseEntity<String> response = restTemplate.exchange(welsh3waEP, HttpMethod.POST, entity, String.class);
+        Exception exception = assertThrows(HttpClientErrorException.class, () -> restTemplate.exchange(welsh3waEP, HttpMethod.POST, entity, String.class));
 
-            ThreeWordAddressSuggestions suggestions = objectMapper.readValue(response.getBody(), ThreeWordAddressSuggestions.class);
-
-            assertEquals(400, response.getStatusCode().value());
-            assertEquals("3wa not recognised: ysgafn.dibyn.cefnog", suggestions.getMessage());
-            assertEquals(3, suggestions.getSuggestions().size());
-        });
+        assertTrue(exception.getMessage().contains("400"));
+        assertTrue(exception.getMessage().contains("3wa not recognised: ysgafn.dibyn.cn"));
+        assertEquals(3, exception.getMessage().split("country", -1).length - 1);
     }
 
     @Test
@@ -95,14 +89,10 @@ public class Welsh3waEPTest {
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
 
         HttpEntity<String> entity = new HttpEntity<>(requestPayload, headers);
-        assertThrows(HttpClientErrorException.class, () -> {
-            ResponseEntity<String> response = restTemplate.exchange(welsh3waEP, HttpMethod.POST, entity, String.class);
+        Exception exception = assertThrows(HttpClientErrorException.class, () -> restTemplate.exchange(welsh3waEP, HttpMethod.POST, entity, String.class));
 
-            ErrorMessage suggestions = objectMapper.readValue(response.getBody(), ErrorMessage.class);
-
-            assertEquals(400, response.getStatusCode().value());
-            assertEquals("3wa address supplied has invalid format", suggestions.getErrorMessage());
-        });
+        assertTrue(exception.getMessage().contains("400"));
+        assertTrue(exception.getMessage().contains("3wa address supplied has invalid format"));
     }
 
     @Test
@@ -116,14 +106,10 @@ public class Welsh3waEPTest {
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
 
         HttpEntity<String> entity = new HttpEntity<>(requestPayload, headers);
-        assertThrows(HttpClientErrorException.class, () -> {
-            ResponseEntity<String> response = restTemplate.exchange(welsh3waEP, HttpMethod.POST, entity, String.class);
+        Exception exception = assertThrows(HttpClientErrorException.class, () -> restTemplate.exchange(welsh3waEP, HttpMethod.POST, entity, String.class));
 
-            ErrorMessage suggestions = objectMapper.readValue(response.getBody(), ErrorMessage.class);
-
-            assertEquals(400, response.getStatusCode().value());
-            assertEquals("words or 'null' should be provided", suggestions.getErrorMessage());
-        });
+        assertTrue(exception.getMessage().contains("400"));
+        assertTrue(exception.getMessage().contains("words or 'null' should be provided"));
     }
 
     @Test
@@ -137,14 +123,27 @@ public class Welsh3waEPTest {
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
 
         HttpEntity<String> entity = new HttpEntity<>(requestPayload, headers);
-        assertThrows(HttpClientErrorException.class, () -> {
-            ResponseEntity<String> response = restTemplate.exchange(welsh3waEP, HttpMethod.POST, entity, String.class);
+        Exception exception = assertThrows(HttpClientErrorException.class, () -> restTemplate.exchange(welsh3waEP, HttpMethod.POST, entity, String.class));
 
-            ErrorMessage suggestions = objectMapper.readValue(response.getBody(), ErrorMessage.class);
+        assertTrue(exception.getMessage().contains("400"));
+        assertTrue(exception.getMessage().contains("Address cannot be null"));
+    }
 
-            assertEquals(400, response.getStatusCode().value());
-            assertEquals("Address cannot be null", suggestions.getErrorMessage());
-        });
+    @Test
+    public void givenValid3wa_when3waOutsideUK_thenReturnBadRequestError() throws Exception {
+        ThreeWordAddress twa = TestUtility.createThreeWordAddress("mafon.mwnci.cyfran");
+        ObjectMapper objectMapper = new ObjectMapper();
+        String requestPayload = objectMapper.writeValueAsString(twa);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+
+        HttpEntity<String> entity = new HttpEntity<>(requestPayload, headers);
+        Exception exception = assertThrows(HttpClientErrorException.class, () -> restTemplate.exchange(welsh3waEP, HttpMethod.POST, entity, String.class));
+
+        assertTrue(exception.getMessage().contains("400"));
+        assertTrue(exception.getMessage().contains("Address is outside UK. Please provide a UK address"));
     }
 
 }
