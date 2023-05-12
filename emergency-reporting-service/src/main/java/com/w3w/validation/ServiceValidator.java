@@ -116,7 +116,7 @@ public class ServiceValidator {
      * @param lon longitude as provided in the request payload
      * @return true/false is coordinates are valid/invalid respectively
      */
-    private boolean coordinatesInValidRange(Double lat, Double lon) {
+    public boolean coordinatesInValidRange(Double lat, Double lon) {
         return ((lat >= -90 && lat <= 90) && (lon >= -180 && lon <= 180));
     }
 
