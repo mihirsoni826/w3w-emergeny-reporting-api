@@ -32,7 +32,7 @@ public interface IEmergencyReportService {
      * @see com.w3w.controller.Controller#handleEnglishConvert
      * @see com.w3w.controller.Controller#handleWelshConvert
      */
-    void CreateEmergencyReportPOJOFrom3wa(EmergencyReport emergencyReport, ThreeWordAddress payload);
+    void createEmergencyReportPOJOFrom3wa(EmergencyReport emergencyReport, ThreeWordAddress payload);
 
     /**
      * This method calls the convertCoordsTo3wa passing Welsh language code 'cy' to get three word address for the passed coordinates in Welsh

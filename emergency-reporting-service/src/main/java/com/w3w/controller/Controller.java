@@ -49,7 +49,7 @@ public class Controller {
         emergencyReport.setThreeWordAddress(payload.getThreeWordAddress());
 
         validator.validateRequestPayload(emergencyReport);
-        service.CreateEmergencyReportPOJOFrom3wa(emergencyReport, payload);
+        service.createEmergencyReportPOJOFrom3wa(emergencyReport, payload);
         validator.isUKLatAndLong(emergencyReport.getLatitude(), emergencyReport.getLongitude());
 
         String welsh3wa = service.convertEnglishToWelsh(emergencyReport);
@@ -69,7 +69,7 @@ public class Controller {
         emergencyReport.setThreeWordAddress(payload.getThreeWordAddress());
 
         validator.validateRequestPayload(emergencyReport);
-        service.CreateEmergencyReportPOJOFrom3wa(emergencyReport, payload);
+        service.createEmergencyReportPOJOFrom3wa(emergencyReport, payload);
         validator.isUKLatAndLong(emergencyReport.getLatitude(), emergencyReport.getLongitude());
 
         String english3wa = service.convertWelshToEnglish(emergencyReport);

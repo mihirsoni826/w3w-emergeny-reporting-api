@@ -190,7 +190,7 @@ public class EmergencyReportServiceImpl implements IEmergencyReportService {
     }
 
     @Override
-    public void CreateEmergencyReportPOJOFrom3wa(EmergencyReport emergencyReport, ThreeWordAddress payload) {
+    public void createEmergencyReportPOJOFrom3wa(EmergencyReport emergencyReport, ThreeWordAddress payload) {
         com.what3words.javawrapper.response.Coordinates coordinates = convert3waToCoords(emergencyReport);
         emergencyReport.setLatitude(coordinates.getLat());
         emergencyReport.setLongitude(coordinates.getLng());

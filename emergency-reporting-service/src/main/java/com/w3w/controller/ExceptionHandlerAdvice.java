@@ -46,7 +46,7 @@ public class ExceptionHandlerAdvice extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErrorMessage> handleServiceRuntimeException(W3WApiException e) {
         ErrorMessage errorMessage = new ErrorMessage();
         errorMessage.setErrorCode(e.getErrorCode());
-        errorMessage.setErrorMessage(e.getErrorMessage());
+        errorMessage.setErrorMsg(e.getErrorMessage());
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -57,7 +57,7 @@ public class ExceptionHandlerAdvice extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErrorMessage> handleJsonParseException(JsonParseException e) {
         ErrorMessage errorMessage = new ErrorMessage();
         errorMessage.setErrorCode(HttpStatus.BAD_REQUEST.toString());
-        errorMessage.setErrorMessage(e.getMessage());
+        errorMessage.setErrorMsg(e.getMessage());
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -68,7 +68,7 @@ public class ExceptionHandlerAdvice extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErrorMessage> handleRuntimeException(Exception e) {
         ErrorMessage errorMessage = new ErrorMessage();
         errorMessage.setErrorCode(HttpStatus.INTERNAL_SERVER_ERROR.toString());
-        errorMessage.setErrorMessage(e.getMessage());
+        errorMessage.setErrorMsg(e.getMessage());
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -79,7 +79,7 @@ public class ExceptionHandlerAdvice extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
         ErrorMessage errorMessage = new ErrorMessage();
         errorMessage.setErrorCode(HttpStatus.METHOD_NOT_ALLOWED.toString());
-        errorMessage.setErrorMessage(ex.getMessage());
+        errorMessage.setErrorMsg(ex.getMessage());
 
         return ResponseEntity
                 .status(HttpStatus.METHOD_NOT_ALLOWED)
