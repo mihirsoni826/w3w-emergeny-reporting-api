@@ -6,6 +6,7 @@ import com.w3w.model.ThreeWordAddressSuggestions;
 import com.w3w.service.IEmergencyReportService;
 import com.w3w.utils.Constants;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.regex.Matcher;
@@ -18,6 +19,7 @@ public class ServiceValidator {
 
     private final IEmergencyReportService service;
 
+    @Autowired
     public ServiceValidator(IEmergencyReportService service) {
         this.service = service;
     }
@@ -42,11 +44,12 @@ public class ServiceValidator {
                 throw new BadRequestException("words or 'null' should be provided");
             }
             validateThreeWordAddress(report);
+            log.info("3wa validated successfully!");
         }
         if(lat != null && lon != null) {
             isUKLatAndLong(lat, lon);
+            log.info("Latitude and Longitude validated successfully!");
         }
-        log.info("Request payload validated successfully!");
     }
 
     /**
@@ -92,11 +95,11 @@ public class ServiceValidator {
      * @param lon longitude as provided in the request payload
      * @throws BadRequestException if the coordinates are invalid or if they lie outside UK
      */
-    private void isUKLatAndLong(Double lat, Double lon) {
+    public void isUKLatAndLong(Double lat, Double lon) {
         if(coordinatesInValidRange(lat, lon)) {
             if (lat < 49.8 || lat > 58.7 || lon < -8.6 || lon > 1.8) {
-                log.error("isUKLatAndLong - Coordinates are outside UK");
-                throw new BadRequestException("Coordinates are outside UK. Please provide UK coordinates");
+                log.error("isUKLatAndLong - Address is outside UK");
+                throw new BadRequestException("Address is outside UK. Please provide a UK address");
             }
             else {
                 log.info("isUKLatAndLong - Coordinates are inside UK");

@@ -6,6 +6,7 @@ import com.w3w.model.FilteredSuggestion;
 import com.w3w.model.ThreeWordAddress;
 import com.w3w.model.ThreeWordAddressSuggestions;
 import com.w3w.utils.Constants;
+import com.w3w.validation.ServiceValidator;
 import com.what3words.javawrapper.What3WordsV3;
 import com.what3words.javawrapper.request.Coordinates;
 import com.what3words.javawrapper.response.*;
@@ -95,6 +96,10 @@ public class EmergencyReportServiceImpl implements IEmergencyReportService {
 
         if((lat == null || lon == null) && threeWordAddress != null) {
             com.what3words.javawrapper.response.Coordinates coordinates = convert3waToCoords(emergencyReport);
+
+            ServiceValidator validator = new ServiceValidator(new EmergencyReportServiceImpl());
+            validator.isUKLatAndLong(coordinates.getLat(), coordinates.getLng());
+
             emergencyReport.setLatitude(coordinates.getLat());
             emergencyReport.setLongitude(coordinates.getLng());
 
