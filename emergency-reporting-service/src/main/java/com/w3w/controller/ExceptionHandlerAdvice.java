@@ -6,6 +6,7 @@ import com.w3w.model.Invalid3waErrorMessage;
 import com.w3w.model.ThreeWordAddressSuggestions;
 import com.w3w.model.ErrorMessage;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +20,17 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @ControllerAdvice
+@SuppressWarnings("unused")
 public class ExceptionHandlerAdvice extends ResponseEntityExceptionHandler {
 
+    /**
+     * Exception handler for custom BadRequestException and HttpClientErrorException.BadRequest
+     * @param e Exception thrown
+     * @return Invalid3waErrorMessage object with appropriate error message and 400 status code
+     * @see Invalid3waErrorMessage
+     * @see BadRequestException
+     * @see HttpClientErrorException.BadRequest
+     */
     @ExceptionHandler({BadRequestException.class, HttpClientErrorException.BadRequest.class})
     @ResponseBody
     public ResponseEntity<Invalid3waErrorMessage> handleBadRequestException(Exception e) {
@@ -31,6 +41,13 @@ public class ExceptionHandlerAdvice extends ResponseEntityExceptionHandler {
                 .body(error);
     }
 
+    /**
+     * Exception handler for AutoSuggestException - which is thrown only when user has entered an incorrect/incomplete three word address
+     * @param e Exception object thrown
+     * @return ThreeWordAddressSuggestions object which holds the error message and correct three word address suggestions
+     * @see ThreeWordAddressSuggestions
+     * @see AutoSuggestException
+     */
     @ExceptionHandler(AutoSuggestException.class)
     public ResponseEntity<ThreeWordAddressSuggestions> handleAutoSuggestException(AutoSuggestException e) {
         ThreeWordAddressSuggestions threeWordAddressSuggestions = new ThreeWordAddressSuggestions();
@@ -42,6 +59,13 @@ public class ExceptionHandlerAdvice extends ResponseEntityExceptionHandler {
                 .body(threeWordAddressSuggestions);
     }
 
+    /**
+     * Exception handler for W3WApiException - which is thrown when there is an error while calling the W3W API
+     * @param e Exception object thrown
+     * @return ErrorMessage which holds the appropriate error message and status code 500
+     * @see W3WApiException
+     * @see ErrorMessage
+     */
     @ExceptionHandler(W3WApiException.class)
     public ResponseEntity<ErrorMessage> handleServiceRuntimeException(W3WApiException e) {
         ErrorMessage errorMessage = new ErrorMessage();
@@ -53,6 +77,12 @@ public class ExceptionHandlerAdvice extends ResponseEntityExceptionHandler {
                 .body(errorMessage);
     }
 
+    /**
+     * Exception handler for JsonParseException - which occurs while parsing JSON request/response payload
+     * @param e Exception object thrown
+     * @return ErrorMessage object which holds the appropriate error message and status code 400
+     * @see JsonParseException
+     */
     @ExceptionHandler(JsonParseException.class)
     public ResponseEntity<ErrorMessage> handleJsonParseException(JsonParseException e) {
         ErrorMessage errorMessage = new ErrorMessage();
@@ -64,6 +94,12 @@ public class ExceptionHandlerAdvice extends ResponseEntityExceptionHandler {
                 .body(errorMessage);
     }
 
+    /**
+     * Exception handler for RuntimeException
+     * @param e Exception object thrown
+     * @return ErrorMessage object with appropriate error message and status code 500
+     * @see RuntimeException
+     */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorMessage> handleRuntimeException(Exception e) {
         ErrorMessage errorMessage = new ErrorMessage();
@@ -75,8 +111,13 @@ public class ExceptionHandlerAdvice extends ResponseEntityExceptionHandler {
                 .body(errorMessage);
     }
 
+    /**
+     * Overrides the default MethodNotSupported Exception
+     * @return ErrorMessage object with appropriate error message and status code 405
+     * @see HttpRequestMethodNotSupportedException
+     */
     @Override
-    protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+    protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException ex, @NotNull HttpHeaders headers, @NotNull HttpStatusCode status, @NotNull WebRequest request) {
         ErrorMessage errorMessage = new ErrorMessage();
         errorMessage.setErrorCode(HttpStatus.METHOD_NOT_ALLOWED.toString());
         errorMessage.setErrorMsg(ex.getMessage());

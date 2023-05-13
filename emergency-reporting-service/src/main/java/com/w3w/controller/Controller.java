@@ -29,6 +29,12 @@ public class Controller {
         this.service = service;
     }
 
+    /**
+     * Request handler for /reports endpoint
+     * @param payload The EmergencyReport request payload with either both the coordinates, the three word address or both
+     * @return EmergencyReport response with all addresses
+     * @see EmergencyReport
+     */
     @PostMapping(value = "/reports", produces = Constants.APPLICATION_JSON, consumes = Constants.APPLICATION_JSON)
     public ResponseEntity<EmergencyReport> convertAddressFormat(@RequestBody EmergencyReport payload) {
         log.info("Controller - received request at /reports for payload = {}", payload);
@@ -41,6 +47,13 @@ public class Controller {
         return new ResponseEntity<>(payload, HttpStatus.OK);
     }
 
+    /**
+     * Request handler for /welsh-convert endpoint
+     * @param payload The ThreeWordAddress request payload with an English three word address
+     * @return ThreeWordAddress response with the three word address translated to Welsh
+     * @see ThreeWordAddress
+     * @see EmergencyReport
+     */
     @PostMapping(value = "/welsh-convert", produces = Constants.APPLICATION_JSON, consumes = Constants.APPLICATION_JSON)
     public ResponseEntity<ThreeWordAddress> handleWelshConvert(@RequestBody ThreeWordAddress payload) {
         log.info("Controller - received request at /welsh-convert for payload = {}", payload);
@@ -61,6 +74,13 @@ public class Controller {
         return new ResponseEntity<>(payload, HttpStatus.OK);
     }
 
+    /**
+     * Request handler for /welsh-3wa endpoint
+     * @param payload ThreeWordAddress request with Welsh three word address
+     * @return ThreeWordAddress response with the Welsh three word address translated to English
+     * @see ThreeWordAddress
+     * @see EmergencyReport
+     */
     @PostMapping(value = "/welsh-3wa", produces = Constants.APPLICATION_JSON, consumes = Constants.APPLICATION_JSON)
     public ResponseEntity<ThreeWordAddress> handleEnglishConvert(@RequestBody ThreeWordAddress payload) {
         log.info("Controller - received request at /welsh-3wa for payload = {}", payload);
